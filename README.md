@@ -3,13 +3,13 @@
 ## Mapbox
 
 * [Mapbox Quickstart guide](https://docs.mapbox.com/mapbox-gl-js/guides/install/#quickstart)
-* Maður þarf alltaf JS og CSS linkið :
+* Maður þarf alltaf JS og CSS linkið í html HEAD:
 
   ```html
   <script src='https://api.mapbox.com/mapbox-gl-js/v3.0.0/mapbox-gl.js'></script>
   <link href='https://api.mapbox.com/mapbox-gl-js/v3.0.0/mapbox-gl.css' rel='stylesheet' />
   ```
-* Og þennan kóða í HTML :
+* Og þennan kóða í html BODY :
     ```html
     <div id='map' style='width: 400px; height: 300px;'></div>
     <script>
@@ -22,3 +22,4 @@
     });
     </script>
     ```
+* [Display a map on a webpage example](https://docs.mapbox.com/mapbox-gl-js/example/simple-map/)
