@@ -1,33 +1,35 @@
-// Define the request details  
-const url = 'https://api.vedur.is/skjalftalisa/v1/quake/array';  
-const headers = {    
-    'Content-Type': 'application/json'  
-};  
-const method = 'POST';  
+// Skilgreinir request details
+const url = 'https://api.vedur.is/skjalftalisa/v1/quake/array';
+const headers = {
+    'Content-Type': 'application/json'
+};
+const method = 'POST';
 
-// Set query parameters
-let depth_max = 25;  
-let depth_min = 5;  
-let end_time = "2022-08-03 15:00:00";  
-let event_type = ["qu"];  
-let fields = ["event_id", "lat", "long"];  
-let magnitude_preference = ["Mlw"];  
-let originating_system = ["SIL picks"];  
-let size_max = 6;  
-let size_min = 2;  
-let sort = [];  
-let start_time = "2022-08-02 23:59:59";  
+// Setur query parameters
+let depth_max = 25;
+let depth_min = 5;
+let end_time = "2022-08-03 15:00:00";
+let event_type = ["qu"];
+let fields = ["event_id", "lat", "long"];
+let magnitude_preference = ["Mlw"];
+let originating_system = ["SIL picks"];
+let size_max = 6;
+let size_min = 2;
+let sort = [];
+let start_time = "2022-08-02 23:59:59";
 
-// Define variables to store API response
-let eventId;  
-let latValue;  
-let longValue;  
-let mygeojson = [];  
+// Skilgreinir breytur til að geyma svarið frá API
+let eventId;
+let latValue;
+let longValue;
 
-// Define the GeoJSON structure  
-// let mygeojson = { "type": "FeatureCollection", "features": [] };  
+// Skilgreinir GeoJSON strúktúr
+let mygeojson = {
+    "type": "FeatureCollection",
+    "features": []
+};
 
-// Define the request body
+// Skilgreinir request body-ið
 const body = JSON.stringify({
     "area": [
         [64.1, -21.5],
@@ -52,7 +54,7 @@ const body = JSON.stringify({
     "start_time": start_time,
 });
 
-// Make the HTTP request
+// Gerir HTTP beiðnina
 fetch(url, {
     method: method,
     headers: headers,
@@ -60,35 +62,44 @@ fetch(url, {
 })
     .then(response => response.json())
     .then(data => {
-        console.log("API response: ", data);  
+        console.log("API svar: ", data);
 
-        // Extract the "data" array from the API response
-        const dataArray = data.data;  
+        // Fá "data" fylkið úr API svari
+        const dataArray = data.data;
 
-        // Create an object to store the data with event_id as keys
-        const dataObject = {};  
+        // Búa til object til að geyma gögnin með "event_id" sem lykla
+        const dataObject = {};
 
-        // Iterate through the "data" array and create the object
+        // Fer í gegnum "data" fylkið og býr til object-ana
         for (let i = 0; i < dataArray.event_id.length; i++) {
             let eventId = dataArray.event_id[i];
             let latValue = dataArray.lat[i];
-            let longValue = dataArray.long[i];  
+            let longValue = dataArray.long[i];
 
-            // Create an object for each event_id with lat and long
-            dataObject[eventId] = {
-                lat: latValue,
-                long: longValue
+            // Búa til GeoJSON feature fyrir hvert event
+            let feature = {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [longValue, latValue]
+                },
+                "properties": {
+                    "event_id": eventId
+                }
             };
-            console.log("Item nr:", i, "eventId:", eventId);  
-            console.log("Item nr:", i, "latValue:", latValue);  
-            console.log("Item nr:", i, "longValue:", longValue);  
-            console.log("Item nr:", i, "dataObject:", dataObject);  
-        }
 
-        /* Now, dataObject contains event_id as keys and corresponding lat/long values.
-        Further processing or use of dataObject can be done here */
+            // Bætir við features í GeoJSON "feature" fylkið
+            mygeojson.features.push(feature);
+
+            console.log("Númer:", i, "eventId:", eventId);
+            console.log("Númer:", i, "latValue:", latValue);
+            console.log("Númer:", i, "longValue:", longValue);
+            console.log("Númer:", i, "dataObject:", dataObject);
+        }
+        console.log("GeoJSON skjalið:", mygeojson);
+        // Núna inniheldur dataObject "event_id" sem lykla og tilsvarandi lat/long gildi.
     })
     .catch(error => {
-        // Handle errors here
+        // Error handling
         console.error('Error:', error);
     });
