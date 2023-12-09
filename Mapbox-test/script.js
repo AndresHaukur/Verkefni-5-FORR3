@@ -11,7 +11,7 @@ const map = new mapboxgl.Map({
     container: "map", // container ID
     style: "mapbox://styles/mapbox/streets-v12", // style URL
     projection: "mercator", // Stillir projection sem "Mercator" projection-ið (Frægasta og mest-notaða projectionið. A.k.a. venjulegt 2D kort)
-    center: [ -22.261827, 63.907787], // byrjunar staðsetning [lng(⇆), lat(⇅)]
+    center: [-22.261827, 63.907787], // byrjunar staðsetning [lng(⇆), lat(⇅)]
     zoom: 9.5, // byrjunar zoom-in ✕. "zoom: 9.5," = Zoom in 9.5✕ sinnum, etc.
 });
 
@@ -21,9 +21,28 @@ const mygeojson = {
     "features": []
 };
 
+// Function til að formattar dagsetningar í format-ið sem API-ið notar
+const formatDate = (date) => {
+    const year = date.getUTCFullYear();
+    const month = (date.getUTCMonth() + 1).toString().padStart(2, '0');
+    const day = date.getUTCDate().toString().padStart(2, '0');
+    const hours = date.getUTCHours().toString().padStart(2, '0');
+    const minutes = date.getUTCMinutes().toString().padStart(2, '0');
+    const seconds = date.getUTCSeconds().toString().padStart(2, '0');
+
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+};
+
+const currentDate = new Date();
+const fiveDaysAgo = new Date(currentDate);
+fiveDaysAgo.setDate(currentDate.getDate() - 5);
+
+console.log("Current Date:", formatDate(currentDate));
+console.log("Five Days Ago:", formatDate(fiveDaysAgo));
+
 // Stillir query parameters
-const q_start_time = "2022-08-02 23:59:59";
-const q_end_time = "2022-08-03 15:00:00";
+const q_start_time = formatDate(fiveDaysAgo);
+const q_end_time = formatDate(currentDate);
 const q_depth_min = 5;
 const q_depth_max = 25;
 const q_size_min = 2;
@@ -97,10 +116,11 @@ fetch(url, {
             // Bætir við features í GeoJSON "feature" fylkið
             mygeojson.features.push(feature);
 
-            console.log("Númer:", i, "eventId:", eventId);
-            console.log("Númer:", i, "latValue:", latValue);
-            console.log("Númer:", i, "longValue:", longValue);
-            console.log("Númer:", i, "dataObject:", dataObject);
+            console.log("Númer:", i, "\n",
+            "eventId:", eventId, "\n",
+            "latValue:", latValue, "\n",
+            "longValue:", longValue, "\n",
+            "dataObject:", dataObject, "\n");
         }
         // Núna inniheldur dataObject "event_id" sem lykla og tilsvarandi lat/long gildi.
         console.log("GeoJSON skjalið:", mygeojson);
