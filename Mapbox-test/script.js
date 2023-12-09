@@ -16,23 +16,23 @@ const map = new mapboxgl.Map({
 });
 
 // Skilgreinir GeoJSON strúktúr
-let mygeojson = {
+const mygeojson = {
     "type": "FeatureCollection",
     "features": []
 };
 
 // Stillir query parameters
-let q_depth_max = 25;
-let q_depth_min = 5;
-let q_end_time = "2022-08-03 15:00:00";
-let q_event_type = ["qu"];
-let q_fields = ["event_id", "lat", "long"];
-let q_magnitude_preference = ["Mlw"];
-let q_originating_system = ["SIL picks"];
-let q_size_max = 6;
-let q_size_min = 2;
-let q_sort = [];
-let q_start_time = "2022-08-02 23:59:59";
+const q_start_time = "2022-08-02 23:59:59";
+const q_end_time = "2022-08-03 15:00:00";
+const q_depth_min = 5;
+const q_depth_max = 25;
+const q_size_min = 2;
+const q_size_max = 6;
+const q_event_type = ["qu"];
+const q_originating_system = ["SIL picks"];
+const q_magnitude_preference = ["Mlw"];
+const q_fields = ["event_id", "lat", "long"];
+const q_sort = [];
 
 // Skilgreinir breytur til að geyma svarið frá API
 let eventId;
@@ -52,11 +52,7 @@ const body = JSON.stringify({
     "depth_min": q_depth_min,
     "end_time": q_end_time,
     "event_type": q_event_type,
-    "fields": [
-        "event_id",
-        "lat",
-        "long",
-    ],
+    "fields": ["event_id", "lat", "long"],
     "magnitude_preference": q_magnitude_preference,
     "originating_system": q_originating_system,
     "size_max": q_size_max,
@@ -83,12 +79,11 @@ fetch(url, {
 
         // Fer í gegnum "data" fylkið og býr til object-ana
         for (let i = 0; i < dataArray.event_id.length; i++) {
-            let eventId = dataArray.event_id[i];
-            let latValue = dataArray.lat[i];
-            let longValue = dataArray.long[i];
+            eventId = dataArray.event_id[i];
+            latValue = dataArray.lat[i];
+            longValue = dataArray.long[i];
 
-            // Býr til GeoJSON feature fyrir hvert event
-            let feature = {
+            const feature = {
                 "type": "Feature",
                 "geometry": {
                     "type": "Point",
@@ -138,10 +133,7 @@ map.on("load", () => {
                     "icon-image": "custom-marker",
                     // sækir titilinn úr GeoJSON "event_id" property, teiknar það á kortið
                     "text-field": ["get", "event_id"],
-                    "text-font": [
-                        "Open Sans Semibold",
-                        "Arial Unicode MS Bold"
-                    ],
+                    "text-font": ["Open Sans Semibold", "Arial Unicode MS Bold"],
                     "text-offset": [0, 1.25],
                     "text-anchor": "top"
                 }
