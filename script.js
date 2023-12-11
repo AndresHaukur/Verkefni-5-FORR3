@@ -93,21 +93,9 @@ function fetchData(minMagnitude, maxMagnitude, minDepth, maxDepth, startDate, en
     const q_sort = [];
 
 
-    // Update the API request body with the new query parameters
-    const body = JSON.stringify({
-        "area": q_area,
-        "start_time": q_start_time,
-        "end_time": q_end_time,
-        "depth_min": q_min_depth,
-        "depth_max": q_max_depth,
-        "size_min": q_size_min,
-        "size_max": q_size_max,
-        "event_type": q_event_type,
-        "originating_system": q_originating_system,
-        "magnitude_preference": q_magnitude_preference,
-        "fields": q_fields,
-        "sort": q_sort
-    });
+function myFunction() {
+    console.log("Þetta keyrir");
+}
 
     // Perform the API fetch with the updated query parameters
     fetch(url, {

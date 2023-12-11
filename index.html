@@ -45,7 +45,8 @@
 </head>
 
 <body>
-    <label for="minMagnitude">Min magnitude:</label>
+    <form>
+        <label for="minMagnitude">Min magnitude:</label>
         <input type="text" id="minMagnitude" name="minMagnitude">
 
         <label for="maxMagnitude">Max magnitude:</label>
@@ -63,8 +64,7 @@
         <label for="endDate">End date and time:</label>
         <input type="datetime-local" id="endDate" name="endDate" required>
 
-        <input type="submit" value="Filter">
-
+        <input type="button" onclick="myFunction();" value="Filter">
     </form>
 
     <div id="map"></div>
