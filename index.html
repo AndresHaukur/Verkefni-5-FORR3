@@ -47,22 +47,22 @@
 <body>
     <form>
         <label for="minMagnitude">Min magnitude:</label>
-        <input type="text" id="minMagnitude" name="minMagnitude">
+        <input type="text" id="minMagnitude" name="minMagnitude" value="0">
 
         <label for="maxMagnitude">Max magnitude:</label>
-        <input type="text" id="maxMagnitude" name="maxMagnitude">
+        <input type="text" id="maxMagnitude" name="maxMagnitude" value="10">
 
         <label for="minDepth">Min depth:</label>
-        <input type="text" id="minDepth" name="minDepth">
+        <input type="text" id="minDepth" name="minDepth" value="0">
 
         <label for="maxDepth">Max depth:</label>
-        <input type="text" id="maxDepth" name="maxDepth">
+        <input type="text" id="maxDepth" name="maxDepth" value="15">
 
-        <label for="startDate">Start date and time:</label>
-        <input type="datetime-local" id="startDate" name="startDate" required>
+        <label for="startDate">Start date and time:</label> <!-- copilot write a test value -->
+        <input type="datetime-local" id="startDate" name="startDate" required value="2023-01-01T00:00">
 
         <label for="endDate">End date and time:</label>
-        <input type="datetime-local" id="endDate" name="endDate" required>
+        <input type="datetime-local" id="endDate" name="endDate" required value="2023-11-11T00:00">
 
         <input type="button" onclick="myFunction();" value="Filter">
     </form>
