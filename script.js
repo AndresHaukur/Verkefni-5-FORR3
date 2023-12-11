@@ -7,7 +7,13 @@ const method = "POST";
 
 // Initializar kortið með stillingum
 mapboxgl.accessToken = "pk.eyJ1IjoiYW5kcm9tZWR5eXkiLCJhIjoiY2xwcXl1cGFoMDU0MjJpcWNxZzh5MWxucyJ9.9_9fbAHchEsiJ1WBTE14Eg";
-let mapStyle = "streets-v12"; // Default stílinn
+const street = "streets-v12";
+const satellite = "satellite-v9";
+const satelliteStreet = "satellite-streets-v12";
+const terrain = "terrain-v2";
+const outdoors = "outdoors-v12";
+
+let mapStyle = outdoors; // Default stílinn
 const map = new mapboxgl.Map({
     container: "map", // container ID
     style: `mapbox://styles/mapbox/${mapStyle}`, // Style ID
