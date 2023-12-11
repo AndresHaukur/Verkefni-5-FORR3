@@ -7,9 +7,10 @@ const method = "POST";
 
 // Initializar kortið með stillingum
 mapboxgl.accessToken = "pk.eyJ1IjoiYW5kcm9tZWR5eXkiLCJhIjoiY2xwcXl1cGFoMDU0MjJpcWNxZzh5MWxucyJ9.9_9fbAHchEsiJ1WBTE14Eg";
+let mapStyle = "streets-v12"; // Default stílinn
 const map = new mapboxgl.Map({
     container: "map", // container ID
-    style: "mapbox://styles/mapbox/streets-v12", // style URL
+    style: `mapbox://styles/mapbox/${mapStyle}`, // Style ID
     projection: "mercator", // Stillir projection sem "Mercator" projection-ið (Frægasta og mest-notaða projectionið. A.k.a. venjulegt 2D kort)
     center: [-22.261827, 63.907787], // byrjunar staðsetning [lng(⇆), lat(⇅)]
     zoom: 9.5, // byrjunar zoom-in ✕. "zoom: 9.5," = Zoom in 9.5✕ sinnum, etc.
