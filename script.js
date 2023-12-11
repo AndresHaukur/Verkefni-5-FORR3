@@ -77,125 +77,127 @@ const currentDate = new Date();
 const daysAgo = new Date(currentDate);
 daysAgo.setDate(currentDate.getDate() - 30);
 
-// ====================Query færibreytur====================
-const q_area = [
-    [63.393163, -23.386596],
-    [63.418550, -13.297411],
-    [67.000262, -12.978233],
-    [66.625838, -24.460814]
-];
-const q_start_time = formatToApiDate(daysAgo);
-const q_end_time = formatToApiDate(currentDate);
-const q_depth_min = 5;
-const q_depth_max = 25;
-const q_size_min = 1;
-const q_size_max = 10;
-const q_event_type = ["qu"];
-const q_originating_system = ["SIL picks"];
-const q_magnitude_preference = ["Mlw"];
-const q_fields = ["lat", "long", "event_id", "time", "magnitude", "magnitude_type", "depth", "event_type", "originating_system", "seismic_moment"];
-const q_sort = [];
-
-// ====================API Request body-ið====================
-const body = JSON.stringify({
-    "area": q_area,
-    "start_time": q_start_time,
-    "end_time": q_end_time,
-    "depth_min": q_depth_min,
-    "depth_max": q_depth_max,
-    "size_min": q_size_min,
-    "size_max": q_size_max,
-    "event_type": q_event_type,
-    "originating_system": q_originating_system,
-    "magnitude_preference": q_magnitude_preference,
-    "fields": q_fields,
-    "sort": q_sort
-});
+// Function to fetch data based on filtering criteria
+function fetchData(minMagnitude, maxMagnitude, minDepth, maxDepth, startDate, endDate) {
+    // Update the query parameters based on user input
+    const q_min_magnitude = minMagnitude;
+    const q_max_magnitude = maxMagnitude;
+    const q_min_depth = minDepth;
+    const q_max_depth = maxDepth;
+    const q_start_time = formatToApiDate(new Date(startDate));
+    const q_end_time = formatToApiDate(new Date(endDate));
+    const q_event_type = ["qu"];
+    const q_originating_system = ["SIL picks"];
+    const q_magnitude_preference = ["Mlw"];
+    const q_fields = ["lat", "long", "event_id", "time", "magnitude", "magnitude_type", "depth", "event_type", "originating_system", "seismic_moment"];
+    const q_sort = [];
 
 
-// ====================API Fetch-ið====================
-fetch(url, {
-    method: method,
-    headers: headers,
-    body: body,
-})
-    .then(response => response.json())
-    .then(data => {
-        console.log("API svar: ", data);
+    // Update the API request body with the new query parameters
+    const body = JSON.stringify({
+        "area": q_area,
+        "start_time": q_start_time,
+        "end_time": q_end_time,
+        "depth_min": q_min_depth,
+        "depth_max": q_max_depth,
+        "size_min": q_size_min,
+        "size_max": q_size_max,
+        "event_type": q_event_type,
+        "originating_system": q_originating_system,
+        "magnitude_preference": q_magnitude_preference,
+        "fields": q_fields,
+        "sort": q_sort
+    });
 
-        // Fá "data" fylkið úr API svarinu
-        const dataArray = data.data;
+    // Perform the API fetch with the updated query parameters
+    fetch(url, {
+        method: method,
+        headers: headers,
+        body: body,
+    })
+        .then(response => response.json())
+        .then(data => {
+            console.log("API svar: ", data);
 
-        // Fer í gegnum "data" fylkið og býr til object-ana
-        for (let i = 0; i < dataArray.event_id.length; i++) {
-            earthquakeId = dataArray.event_id[i];
-            latitude = dataArray.lat[i];
-            longitude = dataArray.long[i];
-            time = dataArray.time[i];
-            magnitude = dataArray.magnitude[i];
-            magnitudeType = dataArray.magnitude_type[i];
-            depth = dataArray.depth[i];
-            eventType = dataArray.event_type[i];
-            originatingSystem = dataArray.originating_system[i];
-            seismicMoment = dataArray.seismic_moment[i];
+            // Clear existing markers on the map (if any)
+            map.getSource("points").setData({
+                type: "FeatureCollection",
+                features: []
+            });
 
-            const feature = {
-                "type": "Feature",
-                "geometry": {
-                    "type": "Point",
-                    "coordinates": [longitude, latitude]
-                },
-                "properties": {
-                    "event_id": earthquakeId,
-                    "time": time,
-                    "magnitude": magnitude,
-                    "magnitude_type": magnitudeType,
-                    "depth": depth,
-                    "event_type": eventType,
-                    "originating_system": originatingSystem,
-                    "seismic_moment": seismicMoment
-                }
-            };
+            // Fá "data" fylkið úr API svarinu
+            const dataArray = data.data;
 
-            // Bætir við features í GeoJSON "feature" fylkið
-            geojson.features.push(feature);
-            console.log("Númer:", i,
-                "\n", feature,
-                "DATE:",
-                "\n", "UNIX:", time,
-                "\n", "Date:", new Date(time).toString(), "\n");
-        }
-        console.log("GeoJSON skjalið:", geojson);
+            // Fer í gegnum "data" fylkið og býr til object-ana
+            for (let i = 0; i < dataArray.event_id.length; i++) {
+                earthquakeId = dataArray.event_id[i];
+                latitude = dataArray.lat[i];
+                longitude = dataArray.long[i];
+                time = dataArray.time[i];
+                magnitude = dataArray.magnitude[i];
+                magnitudeType = dataArray.magnitude_type[i];
+                depth = dataArray.depth[i];
+                eventType = dataArray.event_type[i];
+                originatingSystem = dataArray.originating_system[i];
+                seismicMoment = dataArray.seismic_moment[i];
 
-        // =========================Kortið=========================
-        map.on("load", () => {
-            map.loadImage( // Bætir við mynd til að nota sem custom marker
-                "https://docs.mapbox.com/mapbox-gl-js/assets/custom_marker.png",
-                (error, image) => {
-                    if (error) throw error;
-                    map.addImage("custom-marker", image);
-                    // ================GeoJSON staðsetningar (gögn)================
-                    map.addSource("points", {
-                        type: "geojson", // Tegund gagnanna er "geojson"
-                        data: geojson // Tekur inn gögnin frá GeoJSON objectinu
-                    });
+                const feature = {
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [longitude, latitude]
+                    },
+                    "properties": {
+                        "event_id": earthquakeId,
+                        "time": time,
+                        "magnitude": magnitude,
+                        "magnitude_type": magnitudeType,
+                        "depth": depth,
+                        "event_type": eventType,
+                        "originating_system": originatingSystem,
+                        "seismic_moment": seismicMoment
+                    }
+                };
 
-                    for (const feature of geojson.features) {
-                        // býr til HTML element fyrir hvert feature
-                        const el = document.createElement('div');
-                        el.className = 'marker';
-                        el.style.backgroundColor = getMagnitudeColor(feature.properties.magnitude); // Setur background litinn byggt á magnitude skjálftanns
+                // Bætir við features í GeoJSON "feature" fylkið
+                geojson.features.push(feature);
+                console.log("Númer:", i,
+                    "\n", feature,
+                    "DATE:",
+                    "\n", "UNIX:", time,
+                    "\n", "Date:", new Date(time).toString(), "\n");
+            }
+            console.log("GeoJSON skjalið:", geojson);
 
-                        const formattedTime = new Date(feature.properties.time * 1000).toLocaleString('en-GB', { // Format-ar UNIX tíma yfir í venjulegan tíma.
-                            hour: 'numeric', minute: 'numeric', day: 'numeric', month: 'numeric', year: 'numeric',
+            // =========================Kortið=========================
+            map.on("load", () => {
+                map.loadImage( // Bætir við mynd til að nota sem custom marker
+                    "https://docs.mapbox.com/mapbox-gl-js/assets/custom_marker.png",
+                    (error, image) => {
+                        if (error) throw error;
+                        map.addImage("custom-marker", image);
+                        // ================GeoJSON staðsetningar (gögn)================
+                        map.addSource("points", {
+                            type: "geojson", // Tegund gagnanna er "geojson"
+                            data: geojson // Tekur inn gögnin frá GeoJSON objectinu
                         });
 
-                        new mapboxgl.Marker(el) // býr til marker fyrir hvert feature og bætir því við í kortið
-                            .setLngLat(feature.geometry.coordinates)
-                            .setPopup(
-                                new mapboxgl.Popup({ offset: 25 }) // bætir við popups
-                                    .setHTML(
-                                        `<h2>event id: ${feature.properties.event_id}</b></h3>
+                        for (const feature of geojson.features) {
+                            // býr til HTML element fyrir hvert feature
+                            const el = document.createElement('div');
+                            el.className = 'marker';
+                            el.style.backgroundColor = getMagnitudeColor(feature.properties.magnitude); // Setur background litinn byggt á magnitude skjálftanns
+
+                            const formattedTime = new Date(feature.properties.time * 1000).toLocaleString('en-GB', { // Format-ar UNIX tíma yfir í venjulegan tíma.
+                                hour: 'numeric', minute: 'numeric', day: 'numeric', month: 'numeric', year: 'numeric',
+                            });
+
+                            new mapboxgl.Marker(el) // býr til marker fyrir hvert feature og bætir því við í kortið
+                                .setLngLat(feature.geometry.coordinates)
+                                .setPopup(
+                                    new mapboxgl.Popup({ offset: 25 }) // bætir við popups
+                                        .setHTML(
+                                            `<h2>event id: ${feature.properties.event_id}</b></h3>
                                         <p>Tími: <b>${formattedTime}</b></p>
                                         <p>Stærð: <b>${feature.properties.magnitude}</b> Mᴸ</p>
                                         <p>Stærðatýpa: <b>${feature.properties.magnitude_type}</b></p>
@@ -203,68 +205,69 @@ fetch(url, {
                                         <p>Tegund atburðar: <b>${feature.properties.event_type}</b></p>
                                         <p>Upprunakerfi: <b>${feature.properties.originating_system}</b> kerfi</p>
                                         <p>Seismic moment: <b>${formatSeismicMoment(feature.properties.seismic_moment)}</b> N⋅m</p>`
-                                    )
-                            )
-                            .addTo(map);
+                                        )
+                                )
+                                .addTo(map);
+                        }
+                        // Function til að fá lit byggt á magnitude
+                        function getMagnitudeColor(magnitude) {
+                            // Skilgreinir svið, og lit þeirra
+                            const colorRanges = [
+                                { range: [0.5, 1], color: '#2376FF' },
+                                { range: [1, 1.5], color: '#00ac02' },
+                                { range: [1.5, 2], color: '#def921' },
+                                { range: [2, 2.5], color: '#FF9600' },
+                                { range: [2.5, 3], color: '#ff0000' },
+                                { range: [3, 3.5], color: '#9a0013' },
+                                { range: [3.5, 4], color: '#6706eb' },
+                                { range: [4, 4.5], color: '#490396' },
+                                { range: [4.5, 5], color: '#2D0044' },
+                                { range: [5, 5.5], color: '#180020' },
+                                { range: [5.5, 6], color: '#17001f' },
+                                { range: [6, 6.5], color: '#16001e' },
+                                { range: [6.5, 7], color: '#15001d' },
+                                { range: [7, 7.5], color: '#14001c' },
+                                { range: [7.5, 8], color: '#14001c' },
+                                { range: [8, 8.5], color: '#14001c' },
+                                { range: [8.5, 9], color: '#14001c' },
+                                { range: [9, 9.5], color: '#14001c' },
+                                { range: [9.5, 10], color: '#000000' },
+                                { range: [10, Infinity], color: '#000000' },
+                            ];
+
+                            // Finnur samsvarandi lit fyrir tiltekið magnitude
+                            const colorObj = colorRanges.find(colorRange => magnitude >= colorRange.range[0] && magnitude < colorRange.range[1]);
+
+                            // Return-ar litinn EÐA default hvítur
+                            return colorObj ? colorObj.color : '#ffffff';
+                        }
+
                     }
-                    // Function til að fá lit byggt á magnitude
-                    function getMagnitudeColor(magnitude) {
-                        // Skilgreinir svið, og lit þeirra
-                        const colorRanges = [
-                            { range: [0.5, 1], color: '#2376FF' },
-                            { range: [1, 1.5], color: '#00ac02' },
-                            { range: [1.5, 2], color: '#def921' },
-                            { range: [2, 2.5], color: '#FF9600' },
-                            { range: [2.5, 3], color: '#ff0000' },
-                            { range: [3, 3.5], color: '#9a0013' },
-                            { range: [3.5, 4], color: '#6706eb' },
-                            { range: [4, 4.5], color: '#490396' },
-                            { range: [4.5, 5], color: '#2D0044' },
-                            { range: [5, 5.5], color: '#180020' },
-                            { range: [5.5, 6], color: '#17001f' },
-                            { range: [6, 6.5], color: '#16001e' },
-                            { range: [6.5, 7], color: '#15001d' },
-                            { range: [7, 7.5], color: '#14001c' },
-                            { range: [7.5, 8], color: '#14001c' },
-                            { range: [8, 8.5], color: '#14001c' },
-                            { range: [8.5, 9], color: '#14001c' },
-                            { range: [9, 9.5], color: '#14001c' },
-                            { range: [9.5, 10], color: '#000000' },
-                            { range: [10, Infinity], color: '#000000' },
-                        ];
-
-                        // Finnur samsvarandi lit fyrir tiltekið magnitude
-                        const colorObj = colorRanges.find(colorRange => magnitude >= colorRange.range[0] && magnitude < colorRange.range[1]);
-
-                        // Return-ar litinn EÐA default hvítur
-                        return colorObj ? colorObj.color : '#ffffff';
-                    }
-
-                }
-            );
+                );
+            });
+        })
+        .catch(error => {
+            // Error handling
+            console.error("Error:", error);
         });
-    })
-    .catch(error => {
-        // Error handling
-        console.error("Error:", error);
-    });
+}
 
+// Event listener for the filter button
+document.getElementById('filterForm').addEventListener('submit', function (event) {
+    event.preventDefault();
+    const minMagnitude = parseFloat(document.getElementById('minMagnitude').value);
+    const maxMagnitude = parseFloat(document.getElementById('maxMagnitude').value);
+    const minDepth = parseFloat(document.getElementById('minDepth').value);
+    const maxDepth = parseFloat(document.getElementById('maxDepth').value);
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
 
-    document.getElementById('filterForm').addEventListener('submit', function(event) {
-        event.preventDefault();
-        const minMagnitude = parseFloat(document.getElementById('minMagnitude').value);
-        const maxMagnitude = parseFloat(document.getElementById('maxMagnitude').value);
-        const minDepth = parseFloat(document.getElementById('minDepth').value);
-        const maxDepth = parseFloat(document.getElementById('maxDepth').value);
-        const startDate = new Date(document.getElementById('startDate').value).getTime();
-        const endDate = new Date(document.getElementById('endDate').value).getTime();
-    
-        // Ensure startDate is less than endDate
-        if (startDate >= endDate) {
-            alert("Start date and time should be before end date and time.");
-            return;
-        }
-    
-        fetchData(minMagnitude, maxMagnitude, minDepth, maxDepth, startDate, endDate);
-    });
-    
+    // Ensure startDate is less than endDate
+    if (startDate >= endDate) {
+        alert("Start date and time should be before end date and time.");
+        return;
+    }
+
+    // Call the fetchData function with the user's input
+    fetchData(minMagnitude, maxMagnitude, minDepth, maxDepth, startDate, endDate);
+});
