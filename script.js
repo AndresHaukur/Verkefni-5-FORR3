@@ -241,3 +241,15 @@ fetch(url, {
         // Error handling
         console.error("Error:", error);
     });
+
+
+document.getElementById('filterForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+    const minMagnitude = document.getElementById('minMagnitude').value;
+    const maxMagnitude = document.getElementById('maxMagnitude').value;
+    const minDepth = document.getElementById('minDepth').value;
+    const maxDepth = document.getElementById('maxDepth').value;
+    const startDate = new Date(document.getElementById('startDate').value).getTime();
+    const endDate = new Date(document.getElementById('endDate').value).getTime();
+    fetchData(minMagnitude, maxMagnitude, minDepth, maxDepth, startDate, endDate);
+});

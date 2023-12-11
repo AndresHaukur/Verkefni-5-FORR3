@@ -43,6 +43,25 @@
 </head>
 
 <body>
+    <form id="filterForm">
+        <label for="minMagnitude">Min magnitude:</label>
+        <input type="range" id="minMagnitude" name="minMagnitude" min="0" max="10" step="0.1">
+        <label for="maxMagnitude">Max magnitude:</label>
+        <input type="range" id="maxMagnitude" name="maxMagnitude" min="0" max="10" step="0.1">
+
+        <label for="minDepth">Min depth:</label>
+        <input type="range" id="minDepth" name="minDepth" min="0" max="100" step="1">
+        <label for="maxDepth">Max depth:</label>
+        <input type="range" id="maxDepth" name="maxDepth" min="0" max="100" step="1">
+
+        <label for="startDate">Start date:</label>
+        <input type="date" id="startDate" name="startDate">
+        <label for="endDate">End date:</label>
+        <input type="date" id="endDate" name="endDate">
+
+        <input type="submit" value="Filter">
+    </form>
+
     <div id="map"></div>
     <script src="script.js"></script>
 </body>
