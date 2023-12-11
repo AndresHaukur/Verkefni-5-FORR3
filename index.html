@@ -16,10 +16,12 @@
 
         #map {
             position: absolute;
-            top: 5%;
-            bottom: 0;
+            top: 15%;
+            bottom: 15;
             height: 80%;
-            width: 60%;
+            width: 80%;
+            margin-left: 200px;
+            margin-right: 200px;
         }
 
         .marker {
@@ -43,23 +45,26 @@
 </head>
 
 <body>
-    <form id="filterForm">
-        <label for="minMagnitude">Min magnitude:</label>
-        <input type="range" id="minMagnitude" name="minMagnitude" min="0" max="10" step="0.1">
+    <label for="minMagnitude">Min magnitude:</label>
+        <input type="text" id="minMagnitude" name="minMagnitude">
+
         <label for="maxMagnitude">Max magnitude:</label>
-        <input type="range" id="maxMagnitude" name="maxMagnitude" min="0" max="10" step="0.1">
+        <input type="text" id="maxMagnitude" name="maxMagnitude">
 
         <label for="minDepth">Min depth:</label>
-        <input type="range" id="minDepth" name="minDepth" min="0" max="100" step="1">
-        <label for="maxDepth">Max depth:</label>
-        <input type="range" id="maxDepth" name="maxDepth" min="0" max="100" step="1">
+        <input type="text" id="minDepth" name="minDepth">
 
-        <label for="startDate">Start date:</label>
-        <input type="date" id="startDate" name="startDate">
-        <label for="endDate">End date:</label>
-        <input type="date" id="endDate" name="endDate">
+        <label for="maxDepth">Max depth:</label>
+        <input type="text" id="maxDepth" name="maxDepth">
+
+        <label for="startDate">Start date and time:</label>
+        <input type="datetime-local" id="startDate" name="startDate" required>
+
+        <label for="endDate">End date and time:</label>
+        <input type="datetime-local" id="endDate" name="endDate" required>
 
         <input type="submit" value="Filter">
+
     </form>
 
     <div id="map"></div>
