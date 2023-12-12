@@ -3,6 +3,8 @@ const url = "https://api.vedur.is/skjalftalisa/v1/quake/array";
 const headers = {
     "Content-Type": "application/json"
 };
+// create an empty array called quakeData
+quakeData = [];
 
 // Initializar kortið með stillingum
 mapboxgl.accessToken = "pk.eyJ1IjoiYW5kcm9tZWR5eXkiLCJhIjoiY2xwcXl1cGFoMDU0MjJpcWNxZzh5MWxucyJ9.9_9fbAHchEsiJ1WBTE14Eg";
@@ -93,8 +95,15 @@ function getMagnitudeColor(magnitude) {
     return colorObj ? colorObj.color : '#ffffff';
 }
 
-function myFunction() {
-    console.log("Þetta keyrir");
+async function myFunction() {
+    console.log("Fetching new earthquake data...");
+    let quakeData = await getVedurQuakeData(daysAgo, currentDate);
+    setMapQuakeMarkers(quakeData);
+
+    console.log("Updating chart with new data...");
+    const processedData = processEarthquakeData(quakeData);
+    console.log("processed");
+    createEarthquakeChart(processedData);
 }
 
 // ====================API Fetch-ið====================
@@ -235,9 +244,77 @@ function setMapQuakeMarkers(quakeData) {
 }
 
 
+function processEarthquakeData(quakeData) {
+    console.log("Received earthquake data:", quakeData);
+
+    // Check if all necessary arrays are present in quakeData
+    if (quakeData && Array.isArray(quakeData.depth) && Array.isArray(quakeData.event_id) && 
+        Array.isArray(quakeData.magnitude) && Array.isArray(quakeData.time)) {
+        
+        console.log("Processing earthquake data for Chart.js...");
+        const processedData = [];
+
+        // Assuming all arrays are of the same length
+        for (let i = 0; i < quakeData.depth.length; i++) {
+            processedData.push({
+                depth: quakeData.depth[i],
+                event_id: quakeData.event_id[i],
+                magnitude: quakeData.magnitude[i],
+                time: unixToTimestamp(quakeData.time[i])
+            });
+        }
+
+        return processedData;
+    } else {
+        console.error("quakeData does not have the expected structure");
+        return []; // Return an empty array or handle the error as needed
+    }
+}
+
+
+
+function createEarthquakeChart(data) {
+    console.log("Creating earthquake chart...");
+    const ctx = document.getElementById('earthquakeChart').getContext('2d');
+    const magnitudes = data.map(d => d.magnitude);
+    const times = data.map(d => d.time);
+    
+    if (window.earthquakeChart && typeof window.earthquakeChart.destroy === 'function') {
+        window.earthquakeChart.destroy();
+        console.log("Chart destroyed.");
+    }
+
+    window.earthquakeChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: times,
+            datasets: [{
+                label: 'Earthquake Magnitude',
+                data: magnitudes,
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                borderColor: 'rgba(255, 99, 132, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    console.log("Chart created.");
+}
+
+
+
+
 // Ræsi allt
 (async () => {
     let quakeData = await getVedurQuakeData(daysAgo, currentDate);
+    console.log("quakeData:", quakeData);
 
     setMapQuakeMarkers(quakeData);
 })()
