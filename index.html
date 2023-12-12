@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet" />
     <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.js"></script>
     <link href="https://api.tiles.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
             margin: 0;
@@ -45,6 +46,8 @@
 </head>
 
 <body>
+    <canvas id="quakeChart" width="800" height="400"></canvas>
+
     <form>
         <label for="minMagnitude">Min magnitude:</label>
         <input type="text" id="minMagnitude" name="minMagnitude" value="0">
@@ -62,12 +65,13 @@
         <input type="datetime-local" id="startDate" name="startDate" required value="2023-01-01T00:00">
 
         <label for="endDate">End date and time:</label>
-        <input type="datetime-local" id="endDate" name="endDate" required value="2023-11-11T00:00">
+        <input type="datetime-local" id="endDate" name="endDate" required value="2023-01-01T00:05">
 
         <input type="button" onclick="myFunction();" value="Filter">
     </form>
 
     <div id="map"></div>
+
     <script src="script.js"></script>
 </body>
 
