@@ -3,32 +3,6 @@ const url = "https://api.vedur.is/skjalftalisa/v1/quake/array";
 const headers = {
     "Content-Type": "application/json"
 };
-// breyta fyrir chart gögn
-const quakeMagnitudeData = [];
-
-function createQuakeChart(geojson) {
-    const ctx = document.getElementById('quakeChart').getContext('2d');
-
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: geojson.features.map(feature => feature.properties.event_id),
-            datasets: [{
-                label: 'Magnitude',
-                data: quakeMagnitudeData,
-                backgroundColor: getMagnitudeColor(1),
-            }],
-        },
-        options: {
-            scales: {
-                y: {
-                    beginAtZero: true,
-                },
-            },
-        },
-    });
-}
-
 
 // Initializar kortið með stillingum
 mapboxgl.accessToken = "pk.eyJ1IjoiYW5kcm9tZWR5eXkiLCJhIjoiY2xwcXl1cGFoMDU0MjJpcWNxZzh5MWxucyJ9.9_9fbAHchEsiJ1WBTE14Eg";
@@ -38,7 +12,7 @@ const satelliteStreet = "satellite-streets-v12";
 const terrain = "terrain-v2";
 const outdoors = "outdoors-v12";
 
-var mapStyle = outdoors; // Default stílinn
+let mapStyle = outdoors; // Default stílinn
 const map = new mapboxgl.Map({
     container: "map", // container ID
     style: `mapbox://styles/mapbox/${mapStyle}`, // Style ID
@@ -52,17 +26,8 @@ const currentDate = new Date();
 const daysAgo = new Date(currentDate);
 daysAgo.setDate(currentDate.getDate() - 30);
 
-function formatToApiDate(dateInput) {
-    // Attempt to convert dateInput to a Date object if it's not already one
-    let date = (dateInput instanceof Date) ? dateInput : new Date(dateInput);
-
-    // Check if the date conversion is successful and the date is valid
-    if (isNaN(date.getTime())) {
-        console.error('Invalid input: dateInput is not a Date object and cannot be converted to one');
-        // Handle the invalid date here (e.g., return null or a default date)
-        return null;
-    }
-
+// Fall til að formattar dagsetningar í format-ið sem API-ið notar
+function formatToApiDate(date) {
     const year = date.getUTCFullYear();
     const month = (date.getUTCMonth() + 1).toString().padStart(2, '0');
     const day = date.getUTCDate().toString().padStart(2, '0');
@@ -73,25 +38,16 @@ function formatToApiDate(dateInput) {
     return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 };
 
-// Function to convert timestamp to Date object
-function timestampToDate(timestamp) {
-    return new Date(timestamp * 1000); // Multiply by 1000 to convert seconds to milliseconds
-}
-
 function unixToTimestamp(unixTimestamp) {
     return new Date(unixTimestamp * 1000).toLocaleString('en-GB', {
-        hour: 'numeric',
-        minute: 'numeric',
-        day: 'numeric',
-        month: 'numeric',
-        year: 'numeric',
+        hour: 'numeric', minute: 'numeric', day: 'numeric', month: 'numeric', year: 'numeric',
     });
 }
 
 function formatSeismicMoment(seismicMoment) {
     // Skilgreinir tákn fyrir veldisvísirinn
     const symbols = ["", "³", "⁶", "⁹", "¹²", "¹⁵", "¹⁸", "²¹", "²⁴", "²⁷", "³⁰"];
-    var veldisvisir = 0; // Frumstillir veldisvísirinn sem 0
+    let veldisvisir = 0; // Frumstillir veldisvísirinn sem 0
 
     // While (seismicMoment >= 1e3) & (veldisvísirinn er innan við symbols sviðið)
     while (seismicMoment >= 1e3 && veldisvisir < symbols.length - 1) {
@@ -137,56 +93,9 @@ function getMagnitudeColor(magnitude) {
     return colorObj ? colorObj.color : '#ffffff';
 }
 
-// Fall til að formatta dagsetningar fyrir Mapbox API
-function formatForMapboxApi(dateString) {
-    const date = new Date(dateString);
-    const isoString = date.toISOString();
-    return isoString.split('.')[0]; // Remove milliseconds
-}
-
-
-
-
 function myFunction() {
     console.log("Þetta keyrir");
-
-    // Get values from the filter form
-    const newMinMagnitude = document.getElementById("minMagnitude").value;
-    const newMaxMagnitude = document.getElementById("maxMagnitude").value;
-    const newMinDepth = document.getElementById("minDepth").value;
-    const newMaxDepth = document.getElementById("maxDepth").value;
-    const newStartDate = document.getElementById("startDate").value;
-    const newEndDate = document.getElementById("endDate").value;
-
-
-    // Call the API and get updated quakeData
-    (async () => {
-        let newQuakeData = await getVedurQuakeData({
-            depth_min: newMinDepth,
-            depth_max: newMaxDepth,
-            size_min: newMinMagnitude,
-            size_max: newMaxMagnitude,
-            start_time: timestampToDate(newStartDate),
-            end_time: timestampToDate(newEndDate),
-            // Other parameters as needed
-        });
-
-        // Clear existing markers and sources
-        map.remove();
-        map.addSource("points", {
-            type: "geojson",
-            data: { type: "FeatureCollection", features: [] }
-        });
-
-        // Set new markers and sources
-        setMapQuakeMarkers(newQuakeData);
-
-        // Recreate the chart with the new data
-        const newGeojson = new GeoJSON(newQuakeData);
-        createQuakeChart(newGeojson);
-    })();
 }
-
 
 // ====================API Fetch-ið====================
 async function getVedurQuakeData(daysAgo, currentDate) {
@@ -212,13 +121,13 @@ async function getVedurQuakeData(daysAgo, currentDate) {
     };
 
     try {
-        var response = await fetch(url, {
+        let response = await fetch(url, {
             method: "POST",
             headers: headers,
             body: JSON.stringify(requestBody)
         })
 
-        var responseData = await response.json();
+        let responseData = await response.json();
         console.log("API svar: ", responseData);
 
         // Skila "data" fylkið úr API svarinu
@@ -252,17 +161,11 @@ class GeoFeature {
 
 class GeoJSON {
     constructor(quakeData) {
-        if (!quakeData || !Array.isArray(quakeData.event_id)) {
-            console.error('Invalid input: quakeData is undefined or does not have the expected structure');
-            // Handle the error appropriately
-            return;
-        }
-
         this.type = "FeatureCollection";
         this.features = [];
 
         // Fer í gegnum "quakeData" fylkið og býr til object-ana
-        for (var i = 0; i < quakeData.event_id.length; i++) {
+        for (let i = 0; i < quakeData.event_id.length; i++) {
             // Bætir við features í GeoJSON "feature" fylkið
             this.features.push(new GeoFeature(quakeData, i));
         }
@@ -294,7 +197,7 @@ function setMapQuakeMarkers(quakeData) {
                         data: geojson // Tekur inn gögnin frá GeoJSON objectinu
                     });
 
-                var sizeFactor = 6;
+                let sizeFactor = 6;
 
                 for (const feature of geojson.features) {
                     // býr til HTML element fyrir hvert feature
@@ -308,8 +211,6 @@ function setMapQuakeMarkers(quakeData) {
                     const formattedTime = new Date(feature.properties.time * 1000).toLocaleString('en-GB', { // Format-ar UNIX tíma yfir í venjulegan tíma.
                         hour: 'numeric', minute: 'numeric', day: 'numeric', month: 'numeric', year: 'numeric',
                     });
-
-                    quakeMagnitudeData.push(feature.properties.magnitude);
 
                     new mapboxgl.Marker(el) // býr til marker fyrir hvert feature og bætir því við í kortið
                         .setLngLat(feature.geometry.coordinates)
@@ -328,10 +229,6 @@ function setMapQuakeMarkers(quakeData) {
                         )
                         .addTo(map);
                 }
-
-                // ====================chart====================
-
-                createQuakeChart(geojson);
             }
         );
     });
@@ -340,7 +237,7 @@ function setMapQuakeMarkers(quakeData) {
 
 // Ræsi allt
 (async () => {
-    var quakeData = await getVedurQuakeData(daysAgo, currentDate);
+    let quakeData = await getVedurQuakeData(daysAgo, currentDate);
 
     setMapQuakeMarkers(quakeData);
 })()

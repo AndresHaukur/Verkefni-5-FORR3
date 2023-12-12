@@ -8,7 +8,6 @@
     <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet" />
     <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.js"></script>
     <link href="https://api.tiles.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
             margin: 0;
@@ -46,32 +45,29 @@
 </head>
 
 <body>
-    <canvas id="quakeChart" width="800" height="400"></canvas>
-
     <form>
         <label for="minMagnitude">Min magnitude:</label>
-        <input type="text" id="minMagnitude" name="minMagnitude" value="0">
+        <input type="text" id="minMagnitude" name="minMagnitude">
 
         <label for="maxMagnitude">Max magnitude:</label>
-        <input type="text" id="maxMagnitude" name="maxMagnitude" value="10">
+        <input type="text" id="maxMagnitude" name="maxMagnitude">
 
         <label for="minDepth">Min depth:</label>
-        <input type="text" id="minDepth" name="minDepth" value="0">
+        <input type="text" id="minDepth" name="minDepth">
 
         <label for="maxDepth">Max depth:</label>
-        <input type="text" id="maxDepth" name="maxDepth" value="15">
+        <input type="text" id="maxDepth" name="maxDepth">
 
-        <label for="startDate">Start date and time:</label> <!-- copilot write a test value -->
-        <input type="datetime-local" id="startDate" name="startDate" required value="2023-01-01T00:00">
+        <label for="startDate">Start date and time:</label>
+        <input type="datetime-local" id="startDate" name="startDate" required>
 
         <label for="endDate">End date and time:</label>
-        <input type="datetime-local" id="endDate" name="endDate" required value="2023-01-01T00:05">
+        <input type="datetime-local" id="endDate" name="endDate" required>
 
         <input type="button" onclick="myFunction();" value="Filter">
     </form>
 
     <div id="map"></div>
-
     <script src="script.js"></script>
 </body>
 
