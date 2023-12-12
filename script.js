@@ -52,8 +52,17 @@ const currentDate = new Date();
 const daysAgo = new Date(currentDate);
 daysAgo.setDate(currentDate.getDate() - 30);
 
-// Fall til að formattar dagsetningar í format-ið sem API-ið notar
-function formatToApiDate(date) {
+function formatToApiDate(dateInput) {
+    // Attempt to convert dateInput to a Date object if it's not already one
+    let date = (dateInput instanceof Date) ? dateInput : new Date(dateInput);
+
+    // Check if the date conversion is successful and the date is valid
+    if (isNaN(date.getTime())) {
+        console.error('Invalid input: dateInput is not a Date object and cannot be converted to one');
+        // Handle the invalid date here (e.g., return null or a default date)
+        return null;
+    }
+
     const year = date.getUTCFullYear();
     const month = (date.getUTCMonth() + 1).toString().padStart(2, '0');
     const day = date.getUTCDate().toString().padStart(2, '0');
@@ -66,7 +75,7 @@ function formatToApiDate(date) {
 
 // Function to convert timestamp to Date object
 function timestampToDate(timestamp) {
-    return new Date(timestamp);
+    return new Date(timestamp * 1000); // Multiply by 1000 to convert seconds to milliseconds
 }
 
 function unixToTimestamp(unixTimestamp) {
@@ -152,7 +161,7 @@ function myFunction() {
 
     // Call the API and get updated quakeData
     (async () => {
-        var newQuakeData = await getVedurQuakeData({
+        let newQuakeData = await getVedurQuakeData({
             depth_min: newMinDepth,
             depth_max: newMaxDepth,
             size_min: newMinMagnitude,
@@ -243,6 +252,12 @@ class GeoFeature {
 
 class GeoJSON {
     constructor(quakeData) {
+        if (!quakeData || !Array.isArray(quakeData.event_id)) {
+            console.error('Invalid input: quakeData is undefined or does not have the expected structure');
+            // Handle the error appropriately
+            return;
+        }
+
         this.type = "FeatureCollection";
         this.features = [];
 
