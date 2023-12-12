@@ -18,14 +18,15 @@ const map = new mapboxgl.Map({
     style: `mapbox://styles/mapbox/${mapStyle}`, // Style ID
     projection: "mercator", // Stillir projection sem "Mercator" projection-ið (Frægasta og mest-notaða projectionið. A.k.a. venjulegt 2D kort)
     center: [-22.261827, 63.907787], // byrjunar staðsetning [lng(⇆), lat(⇅)]
-    zoom: 9.5, // byrjunar zoom-in ✕. "zoom: 9.5," = Zoom in 9.5✕ sinnum, etc.
+    zoom: 10, // byrjunar zoom-in ✕. "zoom: 9.5," = Zoom in 9.5✕ sinnum, etc.
 });
 
 // Dagsetninga breytur
-const currentDate = new Date();
-const daysAgo = new Date(currentDate);
-daysAgo.setDate(currentDate.getDate() - 30);
+const default_end_time = new Date();
+const default_start_time = new Date(default_end_time);
+default_start_time.setDate(default_end_time.getDate() - 30);
 
+// ||=====================================Functions=====================================||
 // Fall til að formattar dagsetningar í format-ið sem API-ið notar
 function formatToApiDate(date) {
     const year = date.getUTCFullYear();
@@ -45,8 +46,7 @@ function unixToTimestamp(unixTimestamp) {
 }
 
 function formatSeismicMoment(seismicMoment) {
-    // Skilgreinir tákn fyrir veldisvísirinn
-    const symbols = ["", "³", "⁶", "⁹", "¹²", "¹⁵", "¹⁸", "²¹", "²⁴", "²⁷", "³⁰"];
+    const symbols = ["", "³", "⁶", "⁹", "¹²", "¹⁵", "¹⁸", "²¹", "²⁴", "²⁷", "³⁰"]; // Skilgreinir tákn fyrir veldisvísirinn
     let veldisvisir = 0; // Frumstillir veldisvísirinn sem 0
 
     // While (seismicMoment >= 1e3) & (veldisvísirinn er innan við symbols sviðið)
@@ -93,13 +93,42 @@ function getMagnitudeColor(magnitude) {
     return colorObj ? colorObj.color : '#ffffff';
 }
 
-function myFunction() {
-    console.log("Þetta keyrir");
+function initializeForm() {
+    document.getElementById('minMagnitude').value = 1;
+    document.getElementById('maxMagnitude').value = 10;
+    document.getElementById('minDepth').value = 5;
+    document.getElementById('maxDepth').value = 25;
+    let startDate = default_start_time.toISOString();
+    let endDate = default_end_time.toISOString();
+    document.getElementById('startDate').value = startDate.substring(0, startDate.indexOf("T") + 6);
+    document.getElementById('endDate').value = endDate.substring(0, endDate.indexOf("T") + 6);
 }
 
-// ====================API Fetch-ið====================
-async function getVedurQuakeData(daysAgo, currentDate) {
-    // ====================Query færibreytur====================
+async function inputFilter() { //TODO: Implementa filter takkann svo notandinn getur filterað jarðskjálfta gögn og punkta
+    // Breytir dagsetningar sem koma frá forminu yfir í API format-ið
+    let startDateValue = document.getElementById('startDate').value;
+    let endDateValue = document.getElementById('endDate').value;
+    let formattedStartDate = formatToApiDate(startDateValue ? new Date(startDateValue) : default_end_time);
+    let formattedEndDate = formatToApiDate(endDateValue ? new Date(endDateValue) : default_start_time);
+
+    // Nær í gildi frá form inputs
+    let options = {
+        start_time: formattedStartDate,
+        end_time: formattedEndDate,
+        // Nær í gildin frá forminu, parse-ar þau sem float
+        depth_min: Number.parseFloat(document.getElementById('minDepth').value || 5),  // Notar default gildi ef að það ekkert er skilgreint
+        depth_max: Number.parseFloat(document.getElementById('maxDepth').value || 25), // Notar default gildi ef að það ekkert er skilgreint
+        size_min: Number.parseFloat(document.getElementById('minMagnitude').value || 1),  // Notar default gildi ef að það ekkert er skilgreint
+        size_max: Number.parseFloat(document.getElementById('maxMagnitude').value || 10)  // Notar default gildi ef að það ekkert er skilgreint
+    };
+
+    // Fetch new quake data with updated parameters
+    let quakeData = await getVedurQuakeData(options);
+}
+
+
+// ---------------API Fetch-ið---------------
+async function getVedurQuakeData(options) {
     const requestBody = {
         area: [
             [63.393163, -23.386596],
@@ -107,18 +136,19 @@ async function getVedurQuakeData(daysAgo, currentDate) {
             [67.000262, -12.978233],
             [66.625838, -24.460814]
         ],
-        start_time: formatToApiDate(daysAgo),
-        end_time: formatToApiDate(currentDate),
-        depth_min: 5,
-        depth_max: 25,
-        size_min: 1,
-        size_max: 10,
+        start_time: options.start_time,
+        end_time: options.end_time,
+        depth_min: options.depth_min,
+        depth_max: options.depth_max,
+        size_min: options.size_min,
+        size_max: options.size_max,
         event_type: ["qu"],
         originating_system: ["SIL picks"],
         magnitude_preference: ["Mlw"],
         fields: ["lat", "long", "event_id", "time", "magnitude", "magnitude_type", "depth", "event_type", "originating_system", "seismic_moment"],
         sort: []
     };
+
 
     try {
         let response = await fetch(url, {
@@ -128,7 +158,8 @@ async function getVedurQuakeData(daysAgo, currentDate) {
         })
 
         let responseData = await response.json();
-        console.log("API svar: ", responseData);
+        console.log("API request body:", requestBody)
+        console.log("API svar:", responseData);
 
         // Skila "data" fylkið úr API svarinu
         return responseData.data;
@@ -139,6 +170,64 @@ async function getVedurQuakeData(daysAgo, currentDate) {
     }
 }
 
+function setMapQuakeMarkers(quakeData) {
+    const geojson = new GeoJSON(quakeData);
+    console.log("GeoJSON skjalið:", geojson);
+
+    // ---------------GeoJSON staðsetningar (gögn)---------------
+    let pointsSource = map.getSource("points");
+    if (!pointsSource) {
+        map.addSource("points",
+            {
+                type: "geojson", // Tegund gagnanna er "geojson"
+                data: geojson // Tekur inn gögnin frá GeoJSON objectinu
+            });
+    }
+    else {
+        pointsSource.setData(geojson);
+    }
+
+    let sizeFactor = 7;
+    // Eyðir markerum, með því að tæma array af þeim OG eyðir þeim samtímis
+    while (markers.length) {
+        let marker = markers.pop();
+        marker.remove();
+    }
+
+    for (const feature of geojson.features) {
+        // býr til HTML element fyrir hvert feature
+        const el = document.createElement('div');
+        el.className = 'marker';
+        // Setur background litinn og stærð byggt á magnitude skjálftanns
+        el.style.backgroundColor = getMagnitudeColor(feature.properties.magnitude);
+        el.style.width = `${feature.properties.magnitude * sizeFactor}px`;
+        el.style.height = `${feature.properties.magnitude * sizeFactor}px`;
+
+        const formattedTime = new Date(feature.properties.time * 1000).toLocaleString('en-GB', { // Format-ar UNIX tíma yfir í venjulegan tíma.
+            hour: 'numeric', minute: 'numeric', day: 'numeric', month: 'numeric', year: 'numeric',
+        });
+
+        let marker = new mapboxgl.Marker(el) // býr til marker fyrir hvert feature og bætir því við í kortið
+            .setLngLat(feature.geometry.coordinates)
+            .setPopup(
+                new mapboxgl.Popup({ offset: 25 }) // bætir við popups
+                    .setHTML(
+                        `<h2>event id: ${feature.properties.event_id}</b></h3>
+                        <p>Tími: <b>${formattedTime}</b></p>
+                        <p>Stærð: <b>${feature.properties.magnitude}</b> Mᴸ</p>
+                        <p>Stærðatýpa: <b>${feature.properties.magnitude_type}</b></p>
+                        <p>Dýpt: <b>${(feature.properties.depth).toFixed(1)}</b>Km</p>
+                        <p>Tegund atburðar: <b>${feature.properties.event_type}</b></p>
+                        <p>Upprunakerfi: <b>${feature.properties.originating_system}</b> kerfi</p>
+                        <p>Seismic moment: <b>${formatSeismicMoment(feature.properties.seismic_moment)}</b> N⋅m</p>`
+                    )
+            )
+            .addTo(map);
+        markers.push(marker);
+    }
+}
+const markers = [];
+// ||=====================================Classes=====================================||
 class GeoFeature {
     constructor(quakeData, index) {
         this.type = "Feature";
@@ -163,81 +252,18 @@ class GeoJSON {
     constructor(quakeData) {
         this.type = "FeatureCollection";
         this.features = [];
-
         // Fer í gegnum "quakeData" fylkið og býr til object-ana
-        for (let i = 0; i < quakeData.event_id.length; i++) {
+        for (let i = 0; i < quakeData?.event_id?.length ?? 0; i++) {
             // Bætir við features í GeoJSON "feature" fylkið
             this.features.push(new GeoFeature(quakeData, i));
         }
     }
 }
 
-function setMapQuakeMarkers(quakeData) {
-    // =========================Kortið=========================
-    map.on("load", () => {
-        map.loadImage( // Bætir við mynd til að nota sem custom marker
-            "https://docs.mapbox.com/mapbox-gl-js/assets/custom_marker.png",
-            (error, image) => {
-                if (error) {
-                    console.error("Error loading marker image:", error);  // Debug: Check for image loading errors
-                    return;
-                }
-                // ATH: Fer aldrey hingað
-                if (error) throw error;
-
-                map.addImage("custom-marker", image);
-
-                const geojson = new GeoJSON(quakeData);
-                console.log("GeoJSON skjalið:", geojson);
-
-                // ================GeoJSON staðsetningar (gögn)================
-                map.addSource("points",
-                    {
-                        type: "geojson", // Tegund gagnanna er "geojson"
-                        data: geojson // Tekur inn gögnin frá GeoJSON objectinu
-                    });
-
-                let sizeFactor = 6;
-
-                for (const feature of geojson.features) {
-                    // býr til HTML element fyrir hvert feature
-                    const el = document.createElement('div');
-                    el.className = 'marker';
-                    // Setur background litinn og stærð byggt á magnitude skjálftanns
-                    el.style.backgroundColor = getMagnitudeColor(feature.properties.magnitude);
-                    el.style.width = `${feature.properties.magnitude * sizeFactor}px`;
-                    el.style.height = `${feature.properties.magnitude * sizeFactor}px`;
-
-                    const formattedTime = new Date(feature.properties.time * 1000).toLocaleString('en-GB', { // Format-ar UNIX tíma yfir í venjulegan tíma.
-                        hour: 'numeric', minute: 'numeric', day: 'numeric', month: 'numeric', year: 'numeric',
-                    });
-
-                    new mapboxgl.Marker(el) // býr til marker fyrir hvert feature og bætir því við í kortið
-                        .setLngLat(feature.geometry.coordinates)
-                        .setPopup(
-                            new mapboxgl.Popup({ offset: 25 }) // bætir við popups
-                                .setHTML(
-                                    `<h2>event id: ${feature.properties.event_id}</b></h3>
-                                <p>Tími: <b>${formattedTime}</b></p>
-                                <p>Stærð: <b>${feature.properties.magnitude}</b> Mᴸ</p>
-                                <p>Stærðatýpa: <b>${feature.properties.magnitude_type}</b></p>
-                                <p>Dýpt: <b>${(feature.properties.depth).toFixed(1)}</b>Km</p>
-                                <p>Tegund atburðar: <b>${feature.properties.event_type}</b></p>
-                                <p>Upprunakerfi: <b>${feature.properties.originating_system}</b> kerfi</p>
-                                <p>Seismic moment: <b>${formatSeismicMoment(feature.properties.seismic_moment)}</b> N⋅m</p>`
-                                )
-                        )
-                        .addTo(map);
-                }
-            }
-        );
-    });
-}
-
-
 // Ræsi allt
 (async () => {
-    let quakeData = await getVedurQuakeData(daysAgo, currentDate);
+    initializeForm();
+    let quakeData = await getVedurQuakeData(default_start_time, default_end_time);
 
     setMapQuakeMarkers(quakeData);
 })()

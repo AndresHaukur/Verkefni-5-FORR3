@@ -41,32 +41,92 @@
             text-align: center;
             font-family: 'Open Sans', sans-serif;
         }
+
+        form {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            /* Create three columns */
+            grid-gap: 10px;
+            /* Space between rows and columns */
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: row;
+            /* Place label and input side by side */
+            align-items: center;
+            /* Align items vertically */
+        }
+
+        .form-group label {
+            margin-right: 10px;
+            /* Space after the label */
+        }
+
+        .form-group input {
+            flex-grow: 1;
+            /* Allow input to fill up remaining space */
+        }
+
+        .form-group-button {
+            grid-column: 1 / -1;
+            /* Span across all three columns */
+            text-align: center;
+            /* Center the button if desired */
+        }
+
+        .form-group-button input {
+            width: fit-content;
+            /* Fit the content of the button */
+            margin: 0 auto;
+            /* Center the button */
+        }
+
+        /* Additional styles for positioning each group in its respective column */
+        .magnitude-group {
+            grid-column: 1 / 2;
+        }
+
+        .depth-group {
+            grid-column: 2 / 3;
+        }
+
+        .date-group {
+            grid-column: 3 / 4;
+        }
     </style>
 </head>
 
 <body>
     <form>
-        <label for="minMagnitude">Min magnitude:</label>
-        <input type="text" id="minMagnitude" name="minMagnitude">
-
-        <label for="maxMagnitude">Max magnitude:</label>
-        <input type="text" id="maxMagnitude" name="maxMagnitude">
-
-        <label for="minDepth">Min depth:</label>
-        <input type="text" id="minDepth" name="minDepth">
-
-        <label for="maxDepth">Max depth:</label>
-        <input type="text" id="maxDepth" name="maxDepth">
-
-        <label for="startDate">Start date and time:</label>
-        <input type="datetime-local" id="startDate" name="startDate" required>
-
-        <label for="endDate">End date and time:</label>
-        <input type="datetime-local" id="endDate" name="endDate" required>
-
-        <input type="button" onclick="myFunction();" value="Filter">
+        <div class="form-group magnitude-group" style="grid-row: 1/2;">
+            <label for="minMagnitude">Min magnitude:</label>
+            <input type="text" id="minMagnitude" value="" name="minMagnitude">
+        </div>
+        <div class="form-group magnitude-group" style="grid-row: 2/2;">
+            <label for="maxMagnitude">Max magnitude:</label>
+            <input type="text" id="maxMagnitude" value="" name="maxMagnitude">
+        </div>
+        <div class="form-group depth-group" style="grid-row: 1/2;">
+            <label for="minDepth">Min depth:</label>
+            <input type="text" id="minDepth" value="" name="minDepth">
+        </div>
+        <div class="form-group depth-group" style="grid-row: 2/2;">
+            <label for="maxDepth">Max depth:</label>
+            <input type="text" id="maxDepth" value="" name="maxDepth">
+        </div>
+        <div class="form-group date-group" style="grid-row: 1/2;">
+            <label for="startDate">Start date & time:</label>
+            <input type="datetime-local" id="startDate" value="" name="startDate" required>
+        </div>
+        <div class="form-group date-group" style="grid-row: 2/2;">
+            <label for="endDate">End date & time:</label>
+            <input type="datetime-local" id="endDate" value="" name="endDate" required>
+        </div>
+        <div class="form-group form-group-button">
+            <input type="button" onclick="inputFilter();" value="Filter">
+        </div>
     </form>
-
     <div id="map"></div>
     <script src="script.js"></script>
 </body>
