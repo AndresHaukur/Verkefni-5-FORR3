@@ -3,7 +3,7 @@ const url = "https://api.vedur.is/skjalftalisa/v1/quake/array";
 const headers = {
     "Content-Type": "application/json"
 };
-// create an empty array called quakeData
+// býr til tómt array sem heitir quakeData
 quakeData = [];
 
 // Initializar kortið með stillingum
@@ -124,9 +124,11 @@ async function inputFilter() { //TODO: Implementa filter takkann svo notandinn g
         size_max: Number.parseFloat(document.getElementById('maxMagnitude').value || 10)  // Notar default gildi ef að það ekkert er skilgreint
     };
 
-    // Fetch new quake data with updated parameters
+    // Fetchar nýju quake gögn með uppfærðu parameters
     let quakeData = await getVedurQuakeData(options);
-    
+    setMapQuakeMarkers(quakeData);
+
+    // Uppfærir chart með nýjum gögnum
     console.log("Updating chart with new data...");
     const processedData = processEarthquakeData(quakeData);
     console.log("processed");
@@ -267,80 +269,18 @@ class GeoJSON {
     }
 }
 
-function setMapQuakeMarkers(quakeData) {
-    // =========================Kortið=========================
-    map.on("load", () => {
-        map.loadImage( // Bætir við mynd til að nota sem custom marker
-            "https://docs.mapbox.com/mapbox-gl-js/assets/custom_marker.png",
-            (error, image) => {
-                if (error) {
-                    console.error("Error loading marker image:", error);  // Debug: Check for image loading errors
-                    return;
-                }
-                // ATH: Fer aldrey hingað
-                if (error) throw error;
-
-                map.addImage("custom-marker", image);
-
-                const geojson = new GeoJSON(quakeData);
-                console.log("GeoJSON skjalið:", geojson);
-
-                // ================GeoJSON staðsetningar (gögn)================
-                map.addSource("points",
-                    {
-                        type: "geojson", // Tegund gagnanna er "geojson"
-                        data: geojson // Tekur inn gögnin frá GeoJSON objectinu
-                    });
-
-                let sizeFactor = 6;
-
-                for (const feature of geojson.features) {
-                    // býr til HTML element fyrir hvert feature
-                    const el = document.createElement('div');
-                    el.className = 'marker';
-                    // Setur background litinn og stærð byggt á magnitude skjálftanns
-                    el.style.backgroundColor = getMagnitudeColor(feature.properties.magnitude);
-                    el.style.width = `${feature.properties.magnitude * sizeFactor}px`;
-                    el.style.height = `${feature.properties.magnitude * sizeFactor}px`;
-
-                    const formattedTime = new Date(feature.properties.time * 1000).toLocaleString('en-GB', { // Format-ar UNIX tíma yfir í venjulegan tíma.
-                        hour: 'numeric', minute: 'numeric', day: 'numeric', month: 'numeric', year: 'numeric',
-                    });
-
-                    new mapboxgl.Marker(el) // býr til marker fyrir hvert feature og bætir því við í kortið
-                        .setLngLat(feature.geometry.coordinates)
-                        .setPopup(
-                            new mapboxgl.Popup({ offset: 25 }) // bætir við popups
-                                .setHTML(
-                                    `<h2>event id: ${feature.properties.event_id}</b></h3>
-                                <p>Tími: <b>${formattedTime}</b></p>
-                                <p>Stærð: <b>${feature.properties.magnitude}</b> Mᴸ</p>
-                                <p>Stærðatýpa: <b>${feature.properties.magnitude_type}</b></p>
-                                <p>Dýpt: <b>${(feature.properties.depth).toFixed(1)}</b>Km</p>
-                                <p>Tegund atburðar: <b>${feature.properties.event_type}</b></p>
-                                <p>Upprunakerfi: <b>${feature.properties.originating_system}</b> kerfi</p>
-                                <p>Seismic moment: <b>${formatSeismicMoment(feature.properties.seismic_moment)}</b> N⋅m</p>`
-                                )
-                        )
-                        .addTo(map);
-                }
-            }
-        );
-    });
-}
-
 
 function processEarthquakeData(quakeData) {
     console.log("Received earthquake data:", quakeData);
 
-    // Check if all necessary arrays are present in quakeData
-    if (quakeData && Array.isArray(quakeData.depth) && Array.isArray(quakeData.event_id) && 
+    // Gáir ef öll nauðsinleg fylki sem eru til í quakeData
+    if (quakeData && Array.isArray(quakeData.depth) && Array.isArray(quakeData.event_id) &&
         Array.isArray(quakeData.magnitude) && Array.isArray(quakeData.time)) {
-        
+
         console.log("Processing earthquake data for Chart.js...");
         const processedData = [];
 
-        // Assuming all arrays are of the same length
+        // Ef að öll fylki eru jafn löng
         for (let i = 0; i < quakeData.depth.length; i++) {
             processedData.push({
                 depth: quakeData.depth[i],
@@ -353,18 +293,16 @@ function processEarthquakeData(quakeData) {
         return processedData;
     } else {
         console.error("quakeData does not have the expected structure");
-        return []; // Return an empty array or handle the error as needed
+        return [];
     }
 }
-
-
 
 function createEarthquakeChart(data) {
     console.log("Creating earthquake chart...");
     const ctx = document.getElementById('earthquakeChart').getContext('2d');
     const magnitudes = data.map(d => d.magnitude);
     const times = data.map(d => d.time);
-    
+
     if (window.earthquakeChart && typeof window.earthquakeChart.destroy === 'function') {
         window.earthquakeChart.destroy();
         console.log("Chart destroyed.");
@@ -395,13 +333,16 @@ function createEarthquakeChart(data) {
 }
 
 
-
-
 // Ræsi allt
 (async () => {
     initializeForm();
     let quakeData = await getVedurQuakeData(default_start_time, default_end_time);
     console.log("quakeData:", quakeData);
-
+    // Kort
     setMapQuakeMarkers(quakeData);
+    // Chart
+    console.log("Updating chart with new data...");
+    const processedData = processEarthquakeData(quakeData);
+    console.log("processed");
+    createEarthquakeChart(processedData);
 })()

@@ -16,13 +16,15 @@
         }
 
         #map {
-        height: 500px; /* Set a fixed height for the map */
-        width: 100%;
+        height: 100vh; /* 100% af "view-height"*/
+        width: 49vw; /* 49% af "view-width"*/
+        display: inline-block;
         }
 
         #chart-container {
-        height: 400px; /* Set a fixed height for the chart */
-        width: 100%;
+        height: 100vh; /* 100% af "view-height"*/
+        width: 49vw; /* 49% af "view-width"*/
+        display: inline-block;
         }
 
         .marker {
@@ -46,44 +48,33 @@
         form {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            /* Create three columns */
             grid-gap: 10px;
-            /* Space between rows and columns */
         }
 
         .form-group {
             display: flex;
             flex-direction: row;
-            /* Place label and input side by side */
             align-items: center;
-            /* Align items vertically */
         }
 
         .form-group label {
             margin-right: 10px;
-            /* Space after the label */
         }
 
         .form-group input {
             flex-grow: 1;
-            /* Allow input to fill up remaining space */
         }
 
         .form-group-button {
             grid-column: 1 / -1;
-            /* Span across all three columns */
             text-align: center;
-            /* Center the button if desired */
         }
 
         .form-group-button input {
             width: fit-content;
-            /* Fit the content of the button */
             margin: 0 auto;
-            /* Center the button */
         }
 
-        /* Additional styles for positioning each group in its respective column */
         .magnitude-group {
             grid-column: 1 / 2;
         }
@@ -129,7 +120,7 @@
         </div>
     </form>
     <div id="map"></div>
-    <div id="chart-container" style="width:100%; height:800px;">
+    <div id="chart-container">
         <canvas id="earthquakeChart"></canvas>
     </div>
     
