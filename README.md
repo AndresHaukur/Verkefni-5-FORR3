@@ -17,7 +17,7 @@ Vefsíðan okkar býður upp á yfirlit yfir jarðskjálfta á Íslandi, með þ
 
 
 ### Myndir og myndbönd af verkferli, frumgerð og notkun þess
-*(Todo)*
+[Vídeó af virkni](https://youtu.be/8WGNOfzFBOA)
 
 ### Heimildir og söfn
 * [Mapbox GL JS](https://docs.mapbox.com/mapbox-gl-js/)
