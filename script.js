@@ -135,6 +135,12 @@ async function inputFilter() {
     const processedData = processEarthquakeData(quakeData);
     console.log("processed");
     createEarthquakeChart(processedData);
+
+    // "Fjölda" línurit
+    console.log("Updating count chart with new data...");
+    const counts = countEarthquakesByPeriod(quakeData, default_start_time, default_end_time);
+    console.log("counts:", counts);
+    createEarthquakeCountChart(counts);
 }
 
 // ---------------API Fetch-ið---------------
