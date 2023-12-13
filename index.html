@@ -20,17 +20,25 @@
         width: 49vw; /* 49% af "view-width"*/
         display: inline-block;
         }
-
-        #chart-container {
-        height: 100vh; /* 100% af "view-height"*/
-        width: 49vw; /* 49% af "view-width"*/
-        display: inline-block;
+        .content-container {
+            display: flex;
+            height: 100vh;
         }
 
-        #chart-container-count {
-        height: 100vh; /* 100% af "view-height"*/
-        width: 49vw; /* 49% af "view-width"*/
-        display: inline-block;
+        #map-container {
+            flex: 1; /* Map takes half of the width */
+            height: 100%;
+        }
+
+        #charts-container {
+            flex: 1; /* Charts take half of the width */
+            display: flex;
+            flex-direction: column;
+            height: 50%;
+        }
+
+        #chart-container, #chart-container-count {
+            flex: 1; /* Each chart takes half the height of the charts container */
         }
 
         .marker {
@@ -125,10 +133,23 @@
             <input type="button" onclick="inputFilter();" value="Filter">
         </div>
     </form>
-    <div id="map"></div>
-    <div id="chart-container"><canvas id="earthquakeChart"></canvas></div>
-    <div id="chart-container-count" style="width:100%; height:400px;"><canvas id="earthquakeCountChart"></canvas></div>
-    
+    <div class="content-container">
+        <div id="map-container">
+            <div id="map"></div>
+        </div>
+        <div id="charts-container">
+            <form>
+                <!-- Include your filter inputs and buttons here -->
+                <!-- ... -->
+            </form>
+            <div id="chart-container">
+                <canvas id="earthquakeChart"></canvas>
+            </div>
+            <div id="chart-container-count">
+                <canvas id="earthquakeCountChart"></canvas>
+            </div>
+        </div>
+    </div>
     
 
     <script src="script.js"></script>
