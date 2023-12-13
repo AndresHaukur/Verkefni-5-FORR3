@@ -106,7 +106,7 @@ function initializeForm() {
     document.getElementById('endDate').value = endDate.substring(0, endDate.indexOf("T") + 6);
 }
 
-async function inputFilter() { //TODO: Implementa filter takkann svo notandinn getur filterað jarðskjálfta gögn og punkta
+async function inputFilter() { 
     // Breytir dagsetningar sem koma frá forminu yfir í API format-ið
     let startDateValue = document.getElementById('startDate').value;
     let endDateValue = document.getElementById('endDate').value;
@@ -133,6 +133,12 @@ async function inputFilter() { //TODO: Implementa filter takkann svo notandinn g
     const processedData = processEarthquakeData(quakeData);
     console.log("processed");
     createEarthquakeChart(processedData);
+
+    // Uppfærir count chart með nýjum gögnum
+    console.log("Updating count chart with new data...");
+    const counts = countEarthquakesByPeriod(quakeData, new Date(options.start_time), new Date(options.end_time));
+    console.log("counts:", counts);
+    createEarthquakeCountChart(counts);
 }
 
 
@@ -332,6 +338,56 @@ function createEarthquakeChart(data) {
     console.log("Chart created.");
 }
 
+function countEarthquakesByPeriod(quakeData, startDateTime, endDateTime) {
+    const counts = {};
+    const oneDay = 24 * 60 * 60 * 1000; // milliseconds in a day
+    const period = endDateTime - startDateTime < oneDay * 5 ? 12 * 60 * 60 * 1000 : oneDay; // 12 hours or 1 day
+
+    quakeData.time.forEach((timestamp, index) => {
+        const date = new Date(timestamp * 1000);
+        const periodStart = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 
+                                     date.getHours() - (date.getHours() % (period / 3600000)));
+        const key = periodStart.toISOString();
+
+        counts[key] = (counts[key] || 0) + 1;
+    });
+
+    return counts;
+}
+
+function createEarthquakeCountChart(data) {
+    const ctx = document.getElementById('earthquakeCountChart').getContext('2d');
+
+    const labels = Object.keys(data);
+    const values = Object.values(data);
+
+    if (window.earthquakeCountChart && typeof window.earthquakeCountChart.destroy === 'function') {
+        window.earthquakeCountChart.destroy();
+    }
+
+    window.earthquakeCountChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Number of Earthquakes',
+                data: values,
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+
 
 // Ræsi allt
 (async () => {
@@ -345,4 +401,9 @@ function createEarthquakeChart(data) {
     const processedData = processEarthquakeData(quakeData);
     console.log("processed");
     createEarthquakeChart(processedData);
+    // Count chart
+    console.log("Updating count chart with new data...");
+    const counts = countEarthquakesByPeriod(quakeData, default_start_time, default_end_time);
+    console.log("counts:", counts);
+    createEarthquakeCountChart(counts);
 })()
