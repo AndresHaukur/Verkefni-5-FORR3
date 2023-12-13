@@ -1,25 +1,28 @@
-# Verkefni-5-FORR3
+### Höfundar :
+* Gísli Hrafn Halldórsson
+* Andrés Haukur Andrésson
 
-## Mapbox
+### Áfangi :
+* FORR3FV05EU-Hát Viðmótsforritun
 
-* [Mapbox Quickstart guide](https://docs.mapbox.com/mapbox-gl-js/guides/install/#quickstart)
-* Maður þarf alltaf JS og CSS linkið í html HEAD:
+### Skóli :
+* Upplýsingatækniskólinn - *Reykjavík* - *Tölvubraut*
 
-  ```html
-  <script src='https://api.mapbox.com/mapbox-gl-js/v3.0.0/mapbox-gl.js'></script>
-  <link href='https://api.mapbox.com/mapbox-gl-js/v3.0.0/mapbox-gl.css' rel='stylesheet' />
-  ```
-* Og þennan kóða í html BODY :
-    ```html
-    <div id='map' style='width: 400px; height: 300px;'></div>
-    <script>
-    mapboxgl.accessToken = 'pk.eyJ1IjoiYW5kcm9tZWR5eXkiLCJhIjoiY2xwcXl1cGFoMDU0MjJpcWNxZzh5MWxucyJ9.9_9fbAHchEsiJ1WBTE14Eg';
-    const map = new mapboxgl.Map({
-    	container: 'map', // container ID
-    	style: 'mapbox://styles/mapbox/streets-v12', // style URL
-    	center: [-74.5, 40], // starting position [lng, lat]
-    	zoom: 9, // starting zoom
-    });
-    </script>
-    ```
-* [Display a map on a webpage example](https://docs.mapbox.com/mapbox-gl-js/example/simple-map/)
+### Verkefnalýsing :
+Vefsíðan okkar býður upp á yfirlit yfir jarðskjálfta á Íslandi, með því að sýna þá á korti og í línuritum. Á kortinu eru jarðskjálftarnir sýndir sem punktar, þar sem litur og stærð hvers punkts tákna stærð skjálftans. Við hliðina eru tvö línurit: annað sýnir stærð skjálftanna yfir tíma, og hitt fjölda þeirra á ákveðnu tímabili. Notendur geta síað gögnin með því að slá inn nýjar upplýsingar, sem uppfærir bæði kortið og línuritin. Þegar notandi smellir á skjálftapunkt á kortinu, fær hann nánari upplýsingar um skjálftann og hann er samtímis merktur á línuritinu.
+
+### [GitHub Repository](https://github.com/AndresHaukur/Verkefni-5-FORR3)
+
+### [Vefsíða Verkefnis](https://andreshaukur.github.io/Verkefni-5-FORR3/)
+
+
+### Myndir og myndbönd af verkferli, frumgerð og notkun þess
+*(Todo)*
+
+### Heimildir og söfn
+* [Mapbox GL JS](https://docs.mapbox.com/mapbox-gl-js/)
+* [Mapbox GL JS tutorials á vefsíðu þeirra.](https://docs.mapbox.com/mapbox-gl-js/guides/)
+* [Chart.js](https://www.chartjs.org/)
+
+### Útkoman
+(*Hvernig til tókst, hver væru næstu skref ef haldið væri áfram þróun frumgerðar.*)
