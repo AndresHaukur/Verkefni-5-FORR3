@@ -4,48 +4,79 @@
 <head>
     <meta charset="utf-8" />
     <title>Lokaverkefni</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet" />
     <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.js"></script>
     <link href="https://api.tiles.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.css" rel="stylesheet" />
-    <style>
+    <style title="mapStyles">
         body {
-        margin: 0;
-        padding: 0;
-        }
-
-        #map {
-        height: 100vh; /* 100% af "view-height"*/
-        width: 49vw; /* 49% af "view-width"*/
-        display: inline-block;
-        }
-        .content-container {
-            display: flex;
+            margin: 0;
+            padding: 0;
             height: 100vh;
+            display: grid;
+            grid-template-rows: auto 1fr;
         }
 
-        #map-container {
-            flex: 1; /* Map takes half of the width */
+        .content-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 20px;
             height: 100%;
         }
 
-        #charts-container {
-            flex: 1; /* Charts take half of the width */
-            display: flex;
-            flex-direction: column;
-            height: 50%;
+        .map-container {
+            grid-column: 1;
+            grid-row: 1 / span 2;;
         }
 
-        #chart-container, #chart-container-count {
-            flex: 1; /* Each chart takes half the height of the charts container */
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+
+        #chart-container {
+            display: block;
+            grid-column: 2;
+            grid-row: 1;
+            height: 90%;
+        }
+
+        #chart-container-count {
+            display: block;
+            grid-column: 2;
+            grid-row: 2;
+            height: 90%;
+        }
+
+        @media (max-width: 800px) {
+            .content-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: repeat(3, 1fr);
+                height: 100%;
+            }
+
+            .map-container,
+            #chart-container,
+            #chart-container-count {
+                grid-column: 1;
+                height: 100%;
+            }
+            .map-container {
+                grid-row: 1;
+            }
+
+            #chart-container {
+                grid-row: 2;
+            }
+
+            #chart-container-count {
+                grid-row: 3;
+            }
         }
 
         .marker {
-            /* background-image: url('mapbox-icon.png');
-            background-size: cover; */
-            /* width: 20px; */
-            /* height: 20px; */
             border-radius: 50%;
             cursor: pointer;
         }
@@ -59,8 +90,10 @@
             font-family: 'Open Sans', sans-serif;
         }
 
+
         form {
             display: grid;
+            position: relative;
             grid-template-columns: repeat(3, 1fr);
             grid-gap: 10px;
         }
@@ -133,24 +166,18 @@
             <input type="button" onclick="inputFilter();" value="Filter">
         </div>
     </form>
+
     <div class="content-container">
-        <div id="map-container">
+        <div class="map-container">
             <div id="map"></div>
         </div>
-        <div id="charts-container">
-            <form>
-                <!-- Include your filter inputs and buttons here -->
-                <!-- ... -->
-            </form>
-            <div id="chart-container">
-                <canvas id="earthquakeChart"></canvas>
-            </div>
-            <div id="chart-container-count">
-                <canvas id="earthquakeCountChart"></canvas>
-            </div>
+        <div id="chart-container">
+            <canvas id="earthquakeChart"></canvas>
+        </div>
+        <div id="chart-container-count">
+            <canvas id="earthquakeCountChart"></canvas>
         </div>
     </div>
-    
 
     <script src="script.js"></script>
 </body>

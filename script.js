@@ -3,9 +3,11 @@ const url = "https://api.vedur.is/skjalftalisa/v1/quake/array";
 const headers = {
     "Content-Type": "application/json"
 };
+
 // býr til tómt array sem heitir quakeData
 quakeData = [];
 const markers = [];
+const markerZoomLevel = 9.5;
 
 // Initializar kortið með stillingum
 mapboxgl.accessToken = "pk.eyJ1IjoiYW5kcm9tZWR5eXkiLCJhIjoiY2xwcXl1cGFoMDU0MjJpcWNxZzh5MWxucyJ9.9_9fbAHchEsiJ1WBTE14Eg";
@@ -29,7 +31,6 @@ const default_end_time = new Date();
 const default_start_time = new Date(default_end_time);
 default_start_time.setDate(default_end_time.getDate() - 30);
 
-// ||=====================================Functions=====================================||
 // Fall til að formattar dagsetningar í format-ið sem API-ið notar
 function formatToApiDate(date) {
     const year = date.getUTCFullYear();
@@ -63,7 +64,7 @@ function formatSeismicMoment(seismicMoment) {
     return seismicMoment.toFixed(2) + ` ×10${veldisvisir === 0 ? '' : ' ' + symbols[veldisvisir]}`;
 }
 
-// Function til að fá lit byggt á magnitude
+// Fall til að fá lit eftir magnitude
 function getMagnitudeColor(magnitude) {
     // Skilgreinir svið, og lit þeirra
     const colorRanges = [
@@ -107,8 +108,8 @@ function initializeForm() {
     document.getElementById('endDate').value = endDate.substring(0, endDate.indexOf("T") + 6);
 }
 
-async function inputFilter() { 
-    // Breytir dagsetningar sem koma frá forminu yfir í API format-ið
+async function inputFilter() {
+    // Breytir snið dagsetninga sem koma frá forminu yfir í API sniðið
     let startDateValue = document.getElementById('startDate').value;
     let endDateValue = document.getElementById('endDate').value;
     let formattedStartDate = formatToApiDate(startDateValue ? new Date(startDateValue) : default_end_time);
@@ -125,17 +126,16 @@ async function inputFilter() {
         size_max: Number.parseFloat(document.getElementById('maxMagnitude').value || 10)  // Notar default gildi ef að það ekkert er skilgreint
     };
 
-    // Fetchar nýju quake gögn með uppfærðu parameters
+    // Fetchar nýju jarðskjálfta gögn með uppfærðum færibreytum
     let quakeData = await getVedurQuakeData(options);
     setMapQuakeMarkers(quakeData);
 
-    // Uppfærir chart með nýjum gögnum
+    // Uppfærir línurit með nýjum gögnum
     console.log("Updating chart with new data...");
     const processedData = processEarthquakeData(quakeData);
     console.log("processed");
     createEarthquakeChart(processedData);
 }
-
 
 // ---------------API Fetch-ið---------------
 async function getVedurQuakeData(options) {
@@ -184,14 +184,14 @@ function setMapQuakeMarkers(quakeData) {
     const geojson = new GeoJSON(quakeData);
     console.log("GeoJSON skjalið:", geojson);
 
-    // Check if the source already exists
+    // Gáir ef source-ið er núþegar til
     let pointsSource = map.getSource("points");
     if (!pointsSource) {
         map.addSource("points",
             {
-            type: "geojson", // Tegund gagnanna er "geojson"
-            data: geojson // Tekur inn gögnin frá GeoJSON objectinu
-        });
+                type: "geojson", // Tegund gagnanna er "geojson"
+                data: geojson // Tekur inn gögnin frá GeoJSON objectinu
+            });
     } else {
         pointsSource.setData(geojson);
     }
@@ -204,28 +204,28 @@ function setMapQuakeMarkers(quakeData) {
     }
 
     geojson.features.forEach((feature, index) => {
-        // býr til HTML element fyrir hvert feature
+        // Býr til HTML element fyrir hvert feature
         const el = document.createElement('div');
         el.className = 'marker';
         el.style.backgroundColor = getMagnitudeColor(feature.properties.magnitude);
         el.style.width = `${feature.properties.magnitude * sizeFactor}px`;
         el.style.height = `${feature.properties.magnitude * sizeFactor}px`;
-        
-        
+
+
         const formattedTime = new Date(feature.properties.time * 1000).toLocaleString('en-GB', { // Format-ar UNIX tíma yfir í venjulegan tíma.
             hour: 'numeric', minute: 'numeric', day: 'numeric', month: 'numeric', year: 'numeric',
         });
-        
-        // Event listener for each marker
+
+        // Event listener fyrir hvern marker
         el.addEventListener('click', () => {
             highlightEarthquakeInCharts(index);
         });
-        
+
         let marker = new mapboxgl.Marker(el) // býr til marker fyrir hvert feature og bætir því við í kortið
             .setLngLat(feature.geometry.coordinates)
             .setPopup(
-                new mapboxgl.Popup({ offset: 25 }) // bætir við popups
-                .setHTML(
+                new mapboxgl.Popup({ offset: 25 }) // bætir við popups með gögn fyrir hvern marker
+                    .setHTML(
                         `<h2>event id: ${feature.properties.event_id}</b></h3>
                         <p>Tími: <b>${formattedTime}</b></p>
                         <p>Stærð: <b>${feature.properties.magnitude}</b> Mᴸ</p>
@@ -237,12 +237,74 @@ function setMapQuakeMarkers(quakeData) {
                     )
             )
             .addTo(map);
-        
+
         markers.push(marker);
     });
+    if (!map.getLayer("arthquakes-heat"))
+        map.addLayer(
+            {
+                'id': 'earthquakes-heat',
+                'type': 'heatmap',
+                'source': 'points',
+                'maxzoom': markerZoomLevel,
+                'paint': {
+                    // Eykur heatmap weight eftir magnitude
+                    'heatmap-weight': [
+                        'interpolate',
+                        ['linear'],
+                        ['get', 'mag'],
+                        0, 0,  // Magnitude, weight
+                        10, 1 // Magnitude, weight
+                    ],
+                    // Breytir heatmap lit weight eftir zoom level
+                    // heatmap-intensity er multiplier ofan á heatmap-weight
+                    'heatmap-intensity': [
+                        'interpolate',
+                        ['linear'],
+                        ['zoom'],
+                        0, 0.5,  // Zoom, intensity multiplier
+                        (markerZoomLevel * 2), 2// Zoom, intensity multiplier
+                    ],
+                    // Litastig fyrir heatmap, Stig 0 er alveg gegnsætt.
+                    'heatmap-color': [
+                        'interpolate',
+                        ['linear'],
+                        ['heatmap-density'],
+                        0,
+                        'rgba(0,0,0,0)',
+                        0.2,
+                        'rgb(103, 169, 207)',
+                        0.4,
+                        'rgb(209, 229, 240)',
+                        0.6,
+                        'rgb(253, 219, 0)',
+                        0.8,
+                        'rgb(239, 138, 0)',
+                        1.0,
+                        'rgb(255, 24, 43)',
+                    ],
+                    // Lagfærir heatmap radíus eftir zoom level
+                    'heatmap-radius': [
+                        'interpolate',
+                        ['linear'],
+                        ['zoom'],
+                        0, 5,  // Zoom, pixel radius
+                        (markerZoomLevel * 2), 25// Zoom, pixel radius
+                    ],
+                    // Transition frá heatmap layer yfir í marker layer eftir zoom level
+                    'heatmap-opacity': [
+                        'interpolate',
+                        ['linear'],
+                        ['zoom'],
+                        6, 1, // Zoom, opacity 
+                        (markerZoomLevel * 2), 0,// Zoom, opacity 
+                    ]
+                }
+            },
+            'waterway-label'
+        );
 }
 
-// ||=====================================Classes=====================================||
 class GeoFeature {
     constructor(quakeData, index) {
         this.type = "Feature";
@@ -340,15 +402,15 @@ function createEarthquakeChart(data) {
 
 function countEarthquakesByPeriod(quakeData, startDateTime, endDateTime) {
     const counts = {};
-    const oneDay = 24 * 60 * 60 * 1000; // milliseconds in a day
-    const period = endDateTime - startDateTime < oneDay * 5 ? 12 * 60 * 60 * 1000 : oneDay; // 12 hours or 1 day
+    const oneDay = 24 * 60 * 60 * 1000; // millisekúndur í einum degi
+    const period = endDateTime - startDateTime < oneDay * 5 ? 12 * 60 * 60 * 1000 : oneDay; // 12 klst eða 1 dagur
 
     quakeData.time.forEach((timestamp, index) => {
         const date = new Date(timestamp * 1000);
-        const periodStart = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 
-                                     date.getHours() - (date.getHours() % (period / 3600000)));
-        
-        // Format the date as DD:MM
+        const periodStart = new Date(date.getFullYear(), date.getMonth(), date.getDate(),
+            date.getHours() - (date.getHours() % (period / 3600000)));
+
+        // Breytir snið dagsetninguna yfir í DD:MM
         const key = `${String(periodStart.getDate()).padStart(2, '0')}:${String(periodStart.getMonth() + 1).padStart(2, '0')}`;
 
         counts[key] = (counts[key] || 0) + 1;
@@ -356,8 +418,6 @@ function countEarthquakesByPeriod(quakeData, startDateTime, endDateTime) {
 
     return counts;
 }
-
-
 
 function createEarthquakeCountChart(data) {
     const ctx = document.getElementById('earthquakeCountChart').getContext('2d');
@@ -395,34 +455,60 @@ function highlightEarthquakeInCharts(index) {
     if (window.earthquakeChart) {
         let dataset = window.earthquakeChart.data.datasets[0];
 
-        // Set default color for all points
-        let defaultColor = 'rgba(255, 99, 132, 0.2)'; // Default color
+        // Setur default lit fyrir alla punkta
+        let defaultColor = 'rgba(255, 99, 132, 0.2)';
         let backgroundColors = new Array(dataset.data.length).fill(defaultColor);
 
-        // Highlight the selected index with green color
-        backgroundColors[index] = 'green'; // Highlight color
+        // Highlightar valda indexið með grænum lit
+        backgroundColors[index] = 'green';
         dataset.backgroundColor = backgroundColors;
 
         window.earthquakeChart.update();
     }
-
 }
 
-// Ræsi allt
-(async () => {
+// Finnur css reglu í "mapStyles" og gefur því ákveðið value í display property
+function setCssDisplay(name, value) {
+    for (let i = 0; i < document.styleSheets.length; i++) {
+        var styleSheet = document.styleSheets[i]
+        if (styleSheet.title == "mapStyles") {
+            for (let x = 0; x < styleSheet.cssRules.length; x++) {
+                let cssRule = styleSheet.cssRules[x];
+                if (cssRule.selectorText == name) {
+                    cssRule.style.display = value;
+                    return;
+                }
+            }
+        }
+    }
+}
+
+// Ræsir allt
+document.addEventListener("DOMContentLoaded", async () => {
     initializeForm();
     let quakeData = await getVedurQuakeData(default_start_time, default_end_time);
     console.log("quakeData:", quakeData);
     // Kort
     setMapQuakeMarkers(quakeData);
-    // Chart
+    // Línurit
     console.log("Línurit : uppfærir með ný gögn...");
     const processedData = processEarthquakeData(quakeData);
     console.log("Línurit : komið");
     createEarthquakeChart(processedData);
-    // Count chart
+    // "Fjölda" línurit
     console.log("Updating count chart with new data...");
     const counts = countEarthquakesByPeriod(quakeData, default_start_time, default_end_time);
     console.log("counts:", counts);
     createEarthquakeCountChart(counts);
-})()
+
+    let lastZoom = map.getZoom();
+    map.on('zoom', () => {
+        if (map.getZoom() <= markerZoomLevel) {
+            setCssDisplay(".marker", "none")
+            console.log(map.getZoom());
+        } else {
+            setCssDisplay(".marker", "unset")
+            console.log(map.getZoom());
+        }
+    });
+});
