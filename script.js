@@ -5,6 +5,7 @@ const headers = {
 };
 // býr til tómt array sem heitir quakeData
 quakeData = [];
+const markers = [];
 
 // Initializar kortið með stillingum
 mapboxgl.accessToken = "pk.eyJ1IjoiYW5kcm9tZWR5eXkiLCJhIjoiY2xwcXl1cGFoMDU0MjJpcWNxZzh5MWxucyJ9.9_9fbAHchEsiJ1WBTE14Eg";
@@ -133,12 +134,6 @@ async function inputFilter() {
     const processedData = processEarthquakeData(quakeData);
     console.log("processed");
     createEarthquakeChart(processedData);
-
-    // Uppfærir count chart með nýjum gögnum
-    console.log("Updating count chart with new data...");
-    const counts = countEarthquakesByPeriod(quakeData, new Date(options.start_time), new Date(options.end_time));
-    console.log("counts:", counts);
-    createEarthquakeCountChart(counts);
 }
 
 
@@ -189,16 +184,15 @@ function setMapQuakeMarkers(quakeData) {
     const geojson = new GeoJSON(quakeData);
     console.log("GeoJSON skjalið:", geojson);
 
-    // ---------------GeoJSON staðsetningar (gögn)---------------
+    // Check if the source already exists
     let pointsSource = map.getSource("points");
     if (!pointsSource) {
         map.addSource("points",
             {
-                type: "geojson", // Tegund gagnanna er "geojson"
-                data: geojson // Tekur inn gögnin frá GeoJSON objectinu
-            });
-    }
-    else {
+            type: "geojson", // Tegund gagnanna er "geojson"
+            data: geojson // Tekur inn gögnin frá GeoJSON objectinu
+        });
+    } else {
         pointsSource.setData(geojson);
     }
 
@@ -209,24 +203,29 @@ function setMapQuakeMarkers(quakeData) {
         marker.remove();
     }
 
-    for (const feature of geojson.features) {
+    geojson.features.forEach((feature, index) => {
         // býr til HTML element fyrir hvert feature
         const el = document.createElement('div');
         el.className = 'marker';
-        // Setur background litinn og stærð byggt á magnitude skjálftanns
         el.style.backgroundColor = getMagnitudeColor(feature.properties.magnitude);
         el.style.width = `${feature.properties.magnitude * sizeFactor}px`;
         el.style.height = `${feature.properties.magnitude * sizeFactor}px`;
-
+        
+        
         const formattedTime = new Date(feature.properties.time * 1000).toLocaleString('en-GB', { // Format-ar UNIX tíma yfir í venjulegan tíma.
             hour: 'numeric', minute: 'numeric', day: 'numeric', month: 'numeric', year: 'numeric',
         });
-
+        
+        // Event listener for each marker
+        el.addEventListener('click', () => {
+            highlightEarthquakeInCharts(index);
+        });
+        
         let marker = new mapboxgl.Marker(el) // býr til marker fyrir hvert feature og bætir því við í kortið
             .setLngLat(feature.geometry.coordinates)
             .setPopup(
                 new mapboxgl.Popup({ offset: 25 }) // bætir við popups
-                    .setHTML(
+                .setHTML(
                         `<h2>event id: ${feature.properties.event_id}</b></h3>
                         <p>Tími: <b>${formattedTime}</b></p>
                         <p>Stærð: <b>${feature.properties.magnitude}</b> Mᴸ</p>
@@ -238,10 +237,11 @@ function setMapQuakeMarkers(quakeData) {
                     )
             )
             .addTo(map);
+        
         markers.push(marker);
-    }
+    });
 }
-const markers = [];
+
 // ||=====================================Classes=====================================||
 class GeoFeature {
     constructor(quakeData, index) {
@@ -347,13 +347,17 @@ function countEarthquakesByPeriod(quakeData, startDateTime, endDateTime) {
         const date = new Date(timestamp * 1000);
         const periodStart = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 
                                      date.getHours() - (date.getHours() % (period / 3600000)));
-        const key = periodStart.toISOString();
+        
+        // Format the date as DD:MM
+        const key = `${String(periodStart.getDate()).padStart(2, '0')}:${String(periodStart.getMonth() + 1).padStart(2, '0')}`;
 
         counts[key] = (counts[key] || 0) + 1;
     });
 
     return counts;
 }
+
+
 
 function createEarthquakeCountChart(data) {
     const ctx = document.getElementById('earthquakeCountChart').getContext('2d');
@@ -387,7 +391,22 @@ function createEarthquakeCountChart(data) {
     });
 }
 
+function highlightEarthquakeInCharts(index) {
+    if (window.earthquakeChart) {
+        let dataset = window.earthquakeChart.data.datasets[0];
 
+        // Set default color for all points
+        let defaultColor = 'rgba(255, 99, 132, 0.2)'; // Default color
+        let backgroundColors = new Array(dataset.data.length).fill(defaultColor);
+
+        // Highlight the selected index with green color
+        backgroundColors[index] = 'green'; // Highlight color
+        dataset.backgroundColor = backgroundColors;
+
+        window.earthquakeChart.update();
+    }
+
+}
 
 // Ræsi allt
 (async () => {
@@ -397,9 +416,9 @@ function createEarthquakeCountChart(data) {
     // Kort
     setMapQuakeMarkers(quakeData);
     // Chart
-    console.log("Updating chart with new data...");
+    console.log("Línurit : uppfærir með ný gögn...");
     const processedData = processEarthquakeData(quakeData);
-    console.log("processed");
+    console.log("Línurit : komið");
     createEarthquakeChart(processedData);
     // Count chart
     console.log("Updating count chart with new data...");
