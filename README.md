@@ -25,4 +25,4 @@ Vefsíðan okkar býður upp á yfirlit yfir jarðskjálfta á Íslandi, með þ
 * [Chart.js](https://www.chartjs.org/)
 
 ### Útkoman
-(*Hvernig til tókst, hver væru næstu skref ef haldið væri áfram þróun frumgerðar.*)
+Vinnan gekk jafnt og vel. Næstu skref væri a bæta við kannski mismunandi síðum með mismunandi gögnum í staðinn fyrir að hafa allt á upphafsskjá. Hægt væri að gera fallegra með meira css og litum. 
